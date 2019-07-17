@@ -5,6 +5,10 @@
 #define UPDATE_SPLIT 128
 #endif
 
+#ifndef GLOBAL_MEM_UNROLL
+#define GLOBAL_MEM_UNROLL 16
+#endif
+
 #define POLY 7
 
 
@@ -14,13 +18,14 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	uint mupdate = 4 * m;
 	DATA_TYPE_UNSIGNED address_start = $repl$ * data_chunk;
 	DATA_TYPE_UNSIGNED ran[UPDATE_SPLIT];
-	#pragma unroll
+	#pragma unroll GLOBAL_MEM_UNROLL
 	for (int i=0; i< UPDATE_SPLIT; i++) {
 		ran[i] = ran_const[i];
 	}
 
 	// initiate data array
 	// also included in time measurement
+	#pragma unroll GLOBAL_MEM_UNROLL
 	for (DATA_TYPE i=0; i<data_chunk; i++) {
 		data[i] = address_start + i;
 	}
@@ -28,7 +33,7 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	// do random accesses
 	#pragma ivdep
 	for (int i=0; i< mupdate / UPDATE_SPLIT; i++) {
-		//#pragma unroll
+		#pragma unroll GLOBAL_MEM_UNROLL
 		for (int j=0; j<UPDATE_SPLIT; j++) {
 			DATA_TYPE_UNSIGNED v = 0;
 			if (((DATA_TYPE) ran[j]) < 0) {
