@@ -8,6 +8,15 @@ The implementation follows the Python reference implementation given in  _Introd
 
 ## Build
 
+The Makefile will generate the host code using the code generator given in a submodule.
+So to make use of the code generation male sure to check out the repository recursively.
+
+The code has the following dependencies:
+
+- C++ compiler
+- Intel® FPGA SDK for OpenCL™
+- Python 3 (only for code generation)
+
 Depending on the use case you may want to change certain lines in the
 Makefile:
      
@@ -15,9 +24,9 @@ Makefile:
 2. Update the board name in the Makefile or give the new board name as an argument BOARD
    to make.
 3. Set the number of parallel update requests with UPDATE_SPLIT.
-4. Set the array sizes for the global nad the local memory benchmark with
-   GLOBAL_MEM_SIZE and LOCAL_MEM_SIZE.
-5. Build the host program or the kernels by using the available build targets.
+4. Set the number of kernels that should be generated with REPLICATIONS.
+5. Set the array sizes for the global memory with GLOBAL_MEM_SIZE.
+6. Build the host program or the kernels by using the available build targets.
 
 For more detailed information about the available build targets call:
 
@@ -27,7 +36,7 @@ This will print a list of the targets together with a short description.
 
 To compile all necessary bitstreams and executables for the benchmark run:
 
-    make host kernel local_kernel
+    make host kernel
 
 To make it easier to generate different versions of the kernels, it
 is possible to specify a variable BUILD_SUFFIX when executing make.
@@ -41,11 +50,10 @@ Will build the host and name the binary after the given build suffix.
 So the host would be named 'random_18.1.1'.
 The file will be placed in a folder called 'bin' in the root of this project.
 
-Moreover it is possible to specifiy additional aoc compiler parameters using the AOC_PARAMS variable.
+Moreover it is possible to specifiy additional aoc compiler parameters using the AOC_FLAGS variable.
 It can be used to disable memory interleaving for the kernel:
 
-    make AOC_PARAMS=-no-interleaving=default
-
+    make kernel AOC_FLAGS=-no-interleaving=default
 
 ## Execution
 
@@ -55,14 +63,12 @@ It tries to load it from the same directory it is executed in.
     ./random_18.1.1 
 
 will try to load the kernel file with the name
-random_access_kernel_18.1.1.aocx and random_access_kernel_18.1.1_local.aocx by default.
-Note, that this benchmark uses two different bitsreams: One to benchmark the global memory 
-and one for the local memory.
-Additionally, the executable will interpret the first two arguments given as
-the path to the kernels that should be used.
-For example to use the kernel _other.aocx_ for global memory and *other_local.aocx*:
+random_access_kernel_18.1.1.aocx by default.
+Additionally, the executable will interpret the first argument given as
+the path to the kernel that should be used.
+For example to use the kernel _other.aocx_:
 
-    ./random_18.1.1 other.aocx other_local.aocx
+    ./random_18.1.1 other.aocx
 
 Also, relative and absolute paths to the kernel can be given.
 
