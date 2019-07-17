@@ -1,0 +1,3 @@
+[submodule "pycodegen"]
+	path = pycodegen
+	url = https://git.uni-paderborn.de/mariusme/pycodegen.git
