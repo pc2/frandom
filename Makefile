@@ -15,7 +15,7 @@ AOC := aoc
 AOCL := aocl
 MKDIR_P := mkdir -p
 
-CODE_GENERATOR := generator/generator.py
+CODE_GENERATOR := pycodegen/generator.py
 
 $(info ***************************)
 $(info Collected information)
