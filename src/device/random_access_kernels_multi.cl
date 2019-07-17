@@ -37,9 +37,9 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 			ran[j] = (ran[j] << 1) ^ v;
 			DATA_TYPE_UNSIGNED address = ran[j] & (m - 1);
 			DATA_TYPE_UNSIGNED local_address = address - address_start;
-			//if (local_address < data_chunk) {
+			if (local_address < data_chunk) {
 				data[local_address] ^= ran[j];
-			//}
+			}
 		}
 	}
 }
