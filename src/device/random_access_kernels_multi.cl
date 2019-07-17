@@ -31,9 +31,9 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	}
 
 	// do random accesses
-	#pragma ivdep
 	for (int i=0; i< mupdate / UPDATE_SPLIT; i++) {
 		#pragma unroll GLOBAL_MEM_UNROLL
+		#pragma ivdep
 		for (int j=0; j<UPDATE_SPLIT; j++) {
 			DATA_TYPE_UNSIGNED v = 0;
 			if (((DATA_TYPE) ran[j]) < 0) {
