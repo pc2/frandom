@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <iomanip>
 #include "CL/cl.hpp"
+#include <CL/cl_ext_intelfpga.h>
 
 # define HLINE "-------------------------------------------------------------\n"
 
@@ -233,8 +234,8 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	#pragma PY_CODE_GEN block_start
 	// Prepare kernel with ID $rep$
 	cl::CommandQueue compute_queue$rep$(context, device); 
-	cl::Buffer Buffer_data$rep$(context, CL_MEM_READ_ONLY, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$));
-	cl::Buffer Buffer_random$rep$(context, CL_MEM_WRITE_ONLY, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH);
+	cl::Buffer Buffer_data$rep$(context, CL_MEM_READ_ONLY | CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$));
+	cl::Buffer Buffer_random$rep$(context, CL_MEM_WRITE_ONLY| CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH);
     cl::Kernel accesskernel$rep$(program, "accessMemory$rep$", &err);
     assert(err==CL_SUCCESS);
 	//prepare kernels
@@ -246,7 +247,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	assert(err==CL_SUCCESS);
 	err = accesskernel$rep$.setArg(3, Buffer_random$rep$);
 	assert(err==CL_SUCCESS);
-	#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals()}) for rep in range(replications)] 
+	#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals(), "repp1": rep + 1}) for rep in range(replications)] 
     double t;
     double tmin = DBL_MAX;
     t = mysecond();
