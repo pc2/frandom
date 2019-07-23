@@ -58,8 +58,8 @@ endif
 #
 AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) 
 
-GEN_SRC := random_multi.cpp
-GEN_KERNEL_SRC := random_access_kernels_multi.cl
+GEN_SRC := random_simple.cpp
+GEN_KERNEL_SRC := random_access_kernels_simple.cl
 
 SRCS := random.cpp
 TARGET := $(SRCS:.cpp=)$(EXT_BUILD_SUFFIX)
