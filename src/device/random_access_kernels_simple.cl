@@ -25,20 +25,9 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	for (int i=0; i< UPDATE_SPLIT; i++) {
 		ran[i] = ran_const[i];
 	}
-
-	// initiate data array
-	// also included in time measurement
-	#ifdef SINGLE_KERNEL
-	#pragma unroll GLOBAL_MEM_UNROLL
-	for (DATA_TYPE i=0; i<data_chunk; i++) {
-		data[i] = i;
-	}
-	#else
+	
+	#ifndef SINGLE_KERNEL
 	DATA_TYPE_UNSIGNED address_start = $repl$ * data_chunk;
-	#pragma unroll GLOBAL_MEM_UNROLL
-	for (DATA_TYPE i=0; i<data_chunk; i++) {
-		data[i] = address_start + i;
-	}
 	#endif
 
 	uint mupdate = 4 * m;

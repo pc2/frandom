@@ -230,6 +230,10 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 		random[i] = starts((4 * DATA_LENGTH) / RANDOM_LENGTH * i);
 	}
 
+	for (DATA_TYPE i=0; i<DATA_LENGTH; i++) {
+		data[i] = i;
+	}
+
 	//Create Command queue
 	#pragma PY_CODE_GEN block_start
 	// Prepare kernel with ID $rep$
@@ -254,7 +258,8 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
     for (int i = 0; i < NTIMES; i++){
 		#pragma PY_CODE_GEN block_start
 		compute_queue$rep$.enqueueWriteBuffer(Buffer_random$rep$, CL_TRUE, 0, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH, random);
-		#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)]
+		compute_queue$rep$.enqueueWriteBuffer(Buffer_data$rep$, CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$), &data[$rep$ * (DATA_LENGTH / $replications$)]);
+		#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals()}) for rep in range(replications)]
 		#pragma PY_CODE_GEN block_start
 		compute_queue$rep$.finish();
 		#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)]
