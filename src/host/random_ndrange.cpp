@@ -237,7 +237,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	#pragma PY_CODE_GEN block_start
 	// Prepare kernel with ID $rep$
 	cl::CommandQueue compute_queue$rep$(context, device); 
-	cl::Buffer Buffer_random$rep$(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_$rep$_INTELFPGA, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH);
+	cl::Buffer Buffer_random$rep$(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH);
 	cl::Buffer Buffer_data$rep$(context, CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$));
     cl::Kernel accesskernel$rep$(program, "accessMemory$rep$", &err);
     assert(err==CL_SUCCESS);
@@ -248,7 +248,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	assert(err==CL_SUCCESS);
 	err = accesskernel$rep$.setArg(2, DATA_TYPE_UNSIGNED(DATA_LENGTH / $replications$));
 	assert(err==CL_SUCCESS);
-	err = accesskernel$rep$.setArg(3, Buffer_random);
+	err = accesskernel$rep$.setArg(3, Buffer_random$rep$);
 	assert(err==CL_SUCCESS);
 	err = accesskernel$rep$.setArg(4, DATA_TYPE_UNSIGNED($rep$ * (DATA_LENGTH / $replications$)));
 	assert(err==CL_SUCCESS);

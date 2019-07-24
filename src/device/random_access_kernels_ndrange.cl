@@ -31,10 +31,4 @@ void accessMemory$repl$(__global DATA_TYPE* volatile data, ulong m, DATA_TYPE_UN
 }
 #pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]
 
-//  0 1 1 0 0 
-//  1 0 1 0 1
-//  0 0 1 1 1
-// -----------
-//  1 1 1 1 0
-//  1 1 1 1 
 
