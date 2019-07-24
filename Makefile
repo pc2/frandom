@@ -1,7 +1,7 @@
 ##
 #  Author: Marius Meyer
 #  eMail:  marius.meyer@upb.de
-#  Date:   2019/04/05
+#  Date:   2019/07/24
 #
 #  This makefile compiles the Random Access benchmark for FPGA and its OpenCL kernels.
 #  Currently only the  Intel(R) FPGA SDK for OpenCL(TM) utitlity is supported.
@@ -58,8 +58,10 @@ endif
 #
 AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) 
 
-GEN_SRC := random_simple.cpp
-GEN_KERNEL_SRC := random_access_kernels_simple.cl
+TYPE := simple
+
+GEN_SRC := $(SRC_DIR)host/random_$(TYPE).cpp
+GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
 
 SRCS := random.cpp
 TARGET := $(SRCS:.cpp=)$(EXT_BUILD_SUFFIX)
@@ -75,6 +77,7 @@ $(info AOC_FLAGS           = $(AOC_FLAGS))
 $(info REPLICATIONS        = $(REPLICATIONS))
 $(info GLOBAL_MEM_SIZE     = $(GLOBAL_MEM_SIZE))
 $(info UPDATE_SPLIT        = $(UPDATE_SPLIT))
+$(info TYPE                = $(TYPE))
 $(info ***************************)
 
 default: info
@@ -98,13 +101,13 @@ info:
 	$(info Additional compile flags for the kernels can be provided in AOC_FLAGS.)
 	$(info To disable memory interleaving: make kernel AOC_FLAGS=-no-interleaving=default)
 
-$(GEN_SRC_DIR)$(SRCS): $(SRC_DIR)host/$(GEN_SRC)
+$(GEN_SRC_DIR)$(SRCS): $(GEN_SRC)
 	$(MKDIR_P) $(GEN_SRC_DIR)
-	$(CODE_GENERATOR) $(SRC_DIR)host/$(GEN_SRC) -o $(GEN_SRC_DIR)$(SRCS) -p replications=$(REPLICATIONS)
+	$(CODE_GENERATOR) $(GEN_SRC) -o $(GEN_SRC_DIR)$(SRCS) -p replications=$(REPLICATIONS)
 
-$(GEN_SRC_DIR)$(KERNEL_SRCS): $(SRC_DIR)device/$(GEN_KERNEL_SRC)
+$(GEN_SRC_DIR)$(KERNEL_SRCS): $(GEN_KERNEL_SRC)
 	$(MKDIR_P) $(GEN_SRC_DIR)
-	$(CODE_GENERATOR) $(SRC_DIR)device/$(GEN_KERNEL_SRC) -o $(GEN_SRC_DIR)$(KERNEL_SRCS) -p replications=$(REPLICATIONS)
+	$(CODE_GENERATOR) $(GEN_KERNEL_SRC) -o $(GEN_SRC_DIR)$(KERNEL_SRCS) -p replications=$(REPLICATIONS)
 
 host: $(GEN_SRC_DIR)$(SRCS)
 	$(MKDIR_P) $(BIN_DIR)
@@ -120,7 +123,7 @@ kernel_emulate: $(GEN_SRC_DIR)$(KERNEL_SRCS)
 	$(MKDIR_P) $(BIN_DIR)
 	$(AOC) -march=emulator $(COMMON_FLAGS) -o $(BIN_DIR)$(KERNEL_TARGET)_emulate $(GEN_SRC_DIR)$(KERNEL_SRCS)
 
-run_emu: cleangen kernel_emulate host
+run_emu: cleangen host kernel_emulate
 	CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA=1 gdb --args $(BIN_DIR)$(TARGET) $(BIN_DIR)$(KERNEL_TARGET)_emulate.aocx
 
 kernel_profile: $(GEN_SRC_DIR)$(KERNEL_SRCS)
