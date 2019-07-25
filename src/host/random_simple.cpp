@@ -26,11 +26,6 @@
 #define DATA_LENGTH 67108864
 #endif
 
-#pragma PY_CODE_GEN block_start
-#define REPLICATIONS $replications$
-#pragma PY_CODE_GEN block_end replace()
-
-
 #ifndef RANDOM_LENGTH
 #define RANDOM_LENGTH 128
 #endif
