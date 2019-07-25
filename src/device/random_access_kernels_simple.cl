@@ -6,7 +6,7 @@
 #endif
 
 #ifndef GLOBAL_MEM_UNROLL
-#define GLOBAL_MEM_UNROLL 16
+#define GLOBAL_MEM_UNROLL 8
 #endif
 
 #define POLY 7
@@ -33,7 +33,7 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	uint mupdate = 4 * m;
 	// do random accesses
 	for (int i=0; i< mupdate / UPDATE_SPLIT; i++) {
-		#pragma unroll GLOBAL_MEM_UNROLL
+		DATA_TYPE_UNSIGNED addresses[UPDATE_SPLIT];
 		#pragma ivdep
 		for (int j=0; j<UPDATE_SPLIT; j++) {
 			DATA_TYPE_UNSIGNED v = 0;
@@ -42,12 +42,16 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 			}
 			ran[j] = (ran[j] << 1) ^ v;
 			DATA_TYPE_UNSIGNED address = ran[j] & (m - 1);
-			#ifdef SINGLE_KERNEL
-			data[address] ^= ran[j];
+			#ifndef SINGLE_KERNEL
+			addresses[j] = address - address_start;
 			#else
-			DATA_TYPE_UNSIGNED local_address = address - address_start;
-			if (local_address < data_chunk) {
-				data[local_address] ^= ran[j];
+			addresses[j] = address;
+			#endif	
+			#ifdef SINGLE_KERNEL
+			data[addresses[j]] ^= ran[j];
+			#else
+			if (addresses[j] < data_chunk) {
+				data[addresses[j]] ^= ran[j];
 			}
 			#endif
 		}
