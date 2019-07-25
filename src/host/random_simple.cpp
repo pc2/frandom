@@ -26,6 +26,11 @@
 #define DATA_LENGTH 67108864
 #endif
 
+#pragma PY_CODE_GEN block_start
+#define REPLICATIONS $replications$
+#pragma PY_CODE_GEN block_end replace()
+
+
 #ifndef RANDOM_LENGTH
 #define RANDOM_LENGTH 128
 #endif
@@ -220,70 +225,88 @@ double mysecond()
 }
 
 void calculate(cl::Context context, cl::Device device, cl::Program program){
-    DATA_TYPE* data;
 	DATA_TYPE_UNSIGNED* random;
-    posix_memalign((void **)&data,64, sizeof(DATA_TYPE)*DATA_LENGTH);
 	posix_memalign((void **)&random,64, sizeof(DATA_TYPE_UNSIGNED)*RANDOM_LENGTH);
     int err;
 
 	for (DATA_TYPE i=0; i<RANDOM_LENGTH; i++) {
 		random[i] = starts((4 * DATA_LENGTH) / RANDOM_LENGTH * i);
 	}
+	std::cout << "Prepare FPGA instances" << std::endl;
 
-	for (DATA_TYPE i=0; i<DATA_LENGTH; i++) {
-		data[i] = i;
+	std::vector<cl::CommandQueue> compute_queue;
+	std::vector<cl::Buffer> Buffer_data;
+	std::vector<cl::Buffer> Buffer_random;
+	std::vector<cl::Kernel> accesskernel;
+	std::vector<DATA_TYPE*> data_sets;
+
+	for (int r=0; r < REPLICATIONS; r++) {
+		DATA_TYPE* data;
+    	posix_memalign((void **)&data,64, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS));
+		data_sets.push_back(data);
+		// Prepare kernel with ID $rep$
+		compute_queue.push_back(cl::CommandQueue(context, device)); 
+		Buffer_data.push_back(cl::Buffer(context, CL_CHANNEL_1_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS)));
+
+		// manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
+		// TODO: change this in case the preprocessor define changes
+		int channel = (r % 8) << 16;
+		Buffer_random.push_back(cl::Buffer(context, CL_MEM_WRITE_ONLY| channel , sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH));
+
+		accesskernel.push_back(cl::Kernel(program, ("accessMemory" + std::to_string(r)).c_str() , &err));
+		assert(err==CL_SUCCESS);
+		//prepare kernels
+		err = accesskernel[r].setArg(0, Buffer_data[r]);
+		assert(err==CL_SUCCESS);
+		err = accesskernel[r].setArg(1, DATA_TYPE_UNSIGNED(DATA_LENGTH));
+		assert(err==CL_SUCCESS);
+		err = accesskernel[r].setArg(2, DATA_TYPE_UNSIGNED(DATA_LENGTH / REPLICATIONS));
+		assert(err==CL_SUCCESS);
+		err = accesskernel[r].setArg(3, Buffer_random[r]);
+		assert(err==CL_SUCCESS);		
 	}
 
-	//Create Command queue
-	#pragma PY_CODE_GEN block_start
-	// Prepare kernel with ID $rep$
-	cl::CommandQueue compute_queue$rep$(context, device); 
-	cl::Buffer Buffer_data$rep$(context, CL_MEM_READ_ONLY | CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$));
-	cl::Buffer Buffer_random$rep$(context, CL_MEM_WRITE_ONLY| CL_CHANNEL_$repp1$_INTELFPGA, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH);
-    cl::Kernel accesskernel$rep$(program, "accessMemory$rep$", &err);
-    assert(err==CL_SUCCESS);
-	//prepare kernels
-	err = accesskernel$rep$.setArg(0, Buffer_data$rep$);
-	assert(err==CL_SUCCESS);
-	err = accesskernel$rep$.setArg(1, DATA_TYPE_UNSIGNED(DATA_LENGTH));
-	assert(err==CL_SUCCESS);
-	err = accesskernel$rep$.setArg(2, DATA_TYPE_UNSIGNED(DATA_LENGTH / $replications$));
-	assert(err==CL_SUCCESS);
-	err = accesskernel$rep$.setArg(3, Buffer_random$rep$);
-	assert(err==CL_SUCCESS);
-	#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals(), "repp1": rep + 1}) for rep in range(replications)] 
     double t;
     double tmin = DBL_MAX;
+	std::cout << "Start actual execution" << std::endl;
     t = mysecond();
     for (int i = 0; i < NTIMES; i++){
-		#pragma PY_CODE_GEN block_start
-		compute_queue$rep$.enqueueWriteBuffer(Buffer_random$rep$, CL_TRUE, 0, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH, random);
-		compute_queue$rep$.enqueueWriteBuffer(Buffer_data$rep$, CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$), &data[$rep$ * (DATA_LENGTH / $replications$)]);
-		#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals()}) for rep in range(replications)]
-		#pragma PY_CODE_GEN block_start
-		compute_queue$rep$.finish();
-		#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)]
+		for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
+			std::cout << "row" << r << std::endl;
+			for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
+				data_sets[r][j] = r*(DATA_LENGTH / REPLICATIONS) + j;
+			}
+		}
+		std::cout << "Prepared data for the next run" << std::endl;
+		for (int r=0; r < REPLICATIONS; r++) {
+			compute_queue[r].enqueueWriteBuffer(Buffer_random[r], CL_TRUE, 0, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH, random);
+			compute_queue[r].enqueueWriteBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
+		}
         t = mysecond();
-		#pragma PY_CODE_GEN block_start
-        compute_queue$rep$.enqueueTask(accesskernel$rep$);
-		#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)] 
-		#pragma PY_CODE_GEN block_start
-		compute_queue$rep$.finish();
-		#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)]
+		for (int r=0; r < REPLICATIONS; r++) {
+        	compute_queue[r].enqueueTask(accesskernel[r]);
+		}
+		for (int r=0; r < REPLICATIONS; r++) {
+			compute_queue[r].finish();
+		}
 		t = mysecond() - t;
 		timearray[i] = t;
 		if (t < tmin) {
 			tmin = t;
 		}
     }
+	std::cout << "Read back results" << std::endl;
 
-
-	#pragma PY_CODE_GEN block_start
-	compute_queue$rep$.enqueueReadBuffer(Buffer_data$rep$, CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / $replications$), &data[$rep$ * (DATA_LENGTH / $replications$)]);
-	#pragma PY_CODE_GEN block_end [replace(replace_dict={**globals(), **locals()}) for rep in range(replications)] 
-	#pragma PY_CODE_GEN block_start
-	compute_queue$rep$.finish();
-	#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for rep in range(replications)]
+	for (int r=0; r < REPLICATIONS; r++) {
+		compute_queue[r].enqueueReadBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
+	} 
+	DATA_TYPE* data;
+    posix_memalign((void **)&data,64, (sizeof(DATA_TYPE)*DATA_LENGTH));
+	for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
+		for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
+			data[r*(DATA_LENGTH / REPLICATIONS) + j] = data_sets[r][j];
+		}
+	}
 
 	/* --- Check Results --- */
 	DATA_TYPE_UNSIGNED temp = 1;
