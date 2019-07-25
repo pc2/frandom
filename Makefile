@@ -33,9 +33,6 @@ endif
 AOCL_COMPILE_CONFIG := $(shell $(AOCL) compile-config )
 AOCL_LINK_CONFIG := $(shell $(AOCL) link-config )
 
-KERNEL_SRCS := random_access_kernels.cl
-KERNEL_INPUTS = $(KERNEL_SRCS:.cl=.aocx)
-
 BOARD := p520_max_sg280l
 
 # Used local memory size should be half of the available M20K size
@@ -53,23 +50,21 @@ ifdef BUILD_SUFFIX
 	EXT_BUILD_SUFFIX := _$(BUILD_SUFFIX)
 endif
 
-##
-# Change aoc params to the ones desired (emulation,simulation,synthesis).
-#
-AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) 
-
 TYPE := simple
+REPLICATIONS := 4
+UPDATE_SPLIT := 128
+GLOBAL_MEM_UNROLL := 8
 
 GEN_SRC := $(SRC_DIR)host/random_$(TYPE).cpp
 GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
 
-SRCS := random.cpp
+SRCS := random_$(TYPE)_$(UPDATE_SPLIT)_$(REPLICATIONS).cpp
 TARGET := $(SRCS:.cpp=)$(EXT_BUILD_SUFFIX)
+KERNEL_SRCS := random_access_kernels_$(TYPE)_$(UPDATE_SPLIT)_$(REPLICATIONS).cl
 KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)
-REPLICATIONS := 4
-UPDATE_SPLIT := 128
 
-COMMON_FLAGS := -DUPDATE_SPLIT=$(UPDATE_SPLIT)
+COMMON_FLAGS := -DUPDATE_SPLIT=$(UPDATE_SPLIT) -DREPLICATIONS=$(REPLICATIONS)
+AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) -DGLOBAL_MEM_UNROLL=$(GLOBAL_MEM_UNROLL)
 
 ifdef DEBUG
 CXX_FLAGS += -g
