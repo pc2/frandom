@@ -9,7 +9,7 @@ The implementation follows the Python reference implementation given in  _Introd
 ## Build
 
 The Makefile will generate the host code using the code generator given in a submodule.
-So to make use of the code generation male sure to check out the repository recursively.
+So to make use of the code generation make sure to check out the repository recursively.
 
 The code has the following dependencies:
 
@@ -19,13 +19,14 @@ The code has the following dependencies:
 
 Depending on the use case you may want to change certain lines in the
 Makefile:
-     
+
 1. Check the location of the used compilers (A C++ compiler and the aoc/aocl)
 2. Update the board name in the Makefile or give the new board name as an argument BOARD
    to make.
-3. Set the number of parallel update requests with UPDATE_SPLIT.
+3. Set the size of the random number array with UPDATE_SPLIT.
 4. Set the number of kernels that should be generated with REPLICATIONS.
-5. Set the array sizes for the global memory with GLOBAL_MEM_SIZE.
+5. Set the array sizes for the global memory with GLOBAL_MEM_SIZE. It should be
+half of the available global memory.
 6. Build the host program or the kernels by using the available build targets.
 
 For more detailed information about the available build targets call:
@@ -43,7 +44,7 @@ is possible to specify a variable BUILD_SUFFIX when executing make.
 This suffix will be added to the kernel name after generation.
 
 Example:
-		
+
 	make host BUILD_SUFFIX=18.1.1
 
 Will build the host and name the binary after the given build suffix.
@@ -59,8 +60,8 @@ It can be used to disable memory interleaving for the kernel:
 
 The created host uses the kernels with the same build suffix by default.
 It tries to load it from the same directory it is executed in.
-   
-    ./random_18.1.1 
+
+    ./random_18.1.1
 
 will try to load the kernel file with the name
 random_access_kernel_18.1.1.aocx by default.
@@ -73,5 +74,3 @@ For example to use the kernel _other.aocx_:
 Also, relative and absolute paths to the kernel can be given.
 
 ## Result interpretation
-
-
