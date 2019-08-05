@@ -15,17 +15,21 @@
 #define SINGLE_KERNEL
 #pragma PY_CODE_GEN block_end if_cond(replications == 1, CODE, None)
 
-
+#ifdef EMBARRASSINGLY_PARALLEL
+#define SINGLE_KERNEL
+#endif
 
 #pragma PY_CODE_GEN block_start
 __kernel
-void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_chunk, __constant DATA_TYPE_UNSIGNED* ran_const) {
+void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m,
+						ulong data_chunk,
+						__constant DATA_TYPE_UNSIGNED* ran_const) {
 	DATA_TYPE_UNSIGNED ran[UPDATE_SPLIT];
 	#pragma unroll GLOBAL_MEM_UNROLL
 	for (int i=0; i< UPDATE_SPLIT; i++) {
 		ran[i] = ran_const[i];
 	}
-	
+
 	#ifndef SINGLE_KERNEL
 	DATA_TYPE_UNSIGNED address_start = $repl$ * data_chunk;
 	#endif
@@ -35,6 +39,7 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 	for (int i=0; i< mupdate / UPDATE_SPLIT; i++) {
 		DATA_TYPE_UNSIGNED addresses[UPDATE_SPLIT];
 		#pragma ivdep
+		#pragma unroll GLOBAL_MEM_UNROLL
 		for (int j=0; j<UPDATE_SPLIT; j++) {
 			DATA_TYPE_UNSIGNED v = 0;
 			if (((DATA_TYPE) ran[j]) < 0) {
@@ -46,7 +51,7 @@ void accessMemory$repl$(__global DATA_TYPE* restrict data, ulong m, ulong data_c
 			addresses[j] = address - address_start;
 			#else
 			addresses[j] = address;
-			#endif	
+			#endif
 			#ifdef SINGLE_KERNEL
 			data[addresses[j]] ^= ran[j];
 			#else
