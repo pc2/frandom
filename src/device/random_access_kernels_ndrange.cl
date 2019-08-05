@@ -5,6 +5,10 @@
 #define UPDATE_SPLIT 128
 #endif
 
+#pragma PY_CODE_GEN block_start
+#define SINGLE_KERNEL
+#pragma PY_CODE_GEN block_end if_cond(replications == 1, CODE, None)
+
 #define POLY 7
 
 #pragma PY_CODE_GEN block_start
@@ -23,12 +27,14 @@ void accessMemory$repl$(__global DATA_TYPE* volatile data, ulong m, DATA_TYPE_UN
 		}
 		ran = (ran << 1) ^ v;
 		DATA_TYPE_UNSIGNED address = ran & (m - 1);
+		#ifdef SINGLE_KERNEL
+		data[address] ^= ran;
+		#else
 		DATA_TYPE_UNSIGNED local_address = address - address_start;
 		if (local_address < data_chunk) {
 			data[local_address] ^= ran;
 		}
+		#endif
 	}
 }
 #pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]
-
-
