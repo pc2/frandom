@@ -5,7 +5,7 @@
 #
 #  This makefile compiles the Random Access benchmark for FPGA and its OpenCL kernels.
 #  Currently only the  Intel(R) FPGA SDK for OpenCL(TM) utitlity is supported.
-#  
+#
 #  Please read the README contained in this folder for more information and
 #  instructions how to compile and execute the benchmark.
 
@@ -33,15 +33,6 @@ endif
 AOCL_COMPILE_CONFIG := $(shell $(AOCL) compile-config )
 AOCL_LINK_CONFIG := $(shell $(AOCL) link-config )
 
-BOARD := p520_max_sg280l
-
-# Used local memory size should be half of the available M20K size
-#
-# For Stratix 10, 229 Mbits are available:
-#      229000000 / (8 * 8) = 3.578.125 long values.
-#      Final size should be: 1.750.000 long values
-GLOBAL_MEM_SIZE := 268435456
-
 BIN_DIR := bin/
 SRC_DIR := src/
 GEN_SRC_DIR := generated/
@@ -50,10 +41,20 @@ ifdef BUILD_SUFFIX
 	EXT_BUILD_SUFFIX := _$(BUILD_SUFFIX)
 endif
 
+## Build settings
+#
+# This section contains all build parameters that might be considered to
+# change for compilation and synthesis.
+#
+##
 TYPE := simple
 REPLICATIONS := 4
 UPDATE_SPLIT := 128
 GLOBAL_MEM_UNROLL := 8
+BOARD := p520_max_sg280l
+GLOBAL_MEM_SIZE := 268435456
+AOC_FLAGS :=-no-interleaving=default
+## End build settings
 
 GEN_SRC := $(SRC_DIR)host/random_$(TYPE).cpp
 GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
@@ -70,13 +71,18 @@ ifdef DEBUG
 CXX_FLAGS += -g
 endif
 
-$(info BOARD               = $(BOARD))
-$(info BUILD_SUFFIX        = $(BUILD_SUFFIX))
-$(info AOC_FLAGS           = $(AOC_FLAGS))
-$(info REPLICATIONS        = $(REPLICATIONS))
-$(info GLOBAL_MEM_SIZE     = $(GLOBAL_MEM_SIZE))
-$(info UPDATE_SPLIT        = $(UPDATE_SPLIT))
-$(info TYPE                = $(TYPE))
+ifdef EMBARRASSINGLY_PARALLEL
+COMMON_FLAGS += -DEMBARRASSINGLY_PARALLEL
+endif
+
+$(info BOARD                   = $(BOARD))
+$(info BUILD_SUFFIX            = $(BUILD_SUFFIX))
+$(info AOC_FLAGS               = $(AOC_FLAGS))
+$(info REPLICATIONS            = $(REPLICATIONS))
+$(info GLOBAL_MEM_SIZE         = $(GLOBAL_MEM_SIZE))
+$(info UPDATE_SPLIT            = $(UPDATE_SPLIT))
+$(info TYPE                    = $(TYPE))
+$(info EMBARRASSINGLY_PARALLEL = $(EMBARRASSINGLY_PARALLEL))
 $(info ***************************)
 
 default: info
@@ -93,7 +99,7 @@ info:
 	$(info kernel                       = Compile global memory kernel)
 	$(info kernel_emulate               = Compile  global memory kernel for emulation)
 	$(info kernel_profile               = Compile  global memory kernel with profiling information enabled)
-	$(info kernel_profile               = Compile  global memory kernel with profiling information enabled)	
+	$(info kernel_profile               = Compile  global memory kernel with profiling information enabled)
 	$(info ************************************************)
 	$(info info                         = Print this list of available targets)
 	$(info ************************************************)
