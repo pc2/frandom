@@ -19,10 +19,13 @@ Number of data access kernels that are generated.
 #define SINGLE_KERNEL
 #pragma PY_CODE_GEN block_end if_cond(replications == 1, CODE, None)
 
+/**
+Constant used to generate new address for random access
+*/
 #define POLY 7
 
 /**
-Struct used for the input channels of the write kernels.
+Struct used for the input channels of the memory access kernels.
 Contain the random value, the old data and a boolean value to stop processing.
  */
 typedef struct {
@@ -31,10 +34,23 @@ typedef struct {
 	DATA_TYPE_UNSIGNED actual_index;
 }  access_data;
 
+/**
+Channel between address calculation and memory access kernel.
+*/
 channel access_data read_channel[DATA_ACCESS_SPLIT];
 
+/**
+The following section contains the implementation of two kernels to generate
+random accesses to the global memory.
+*/
 #pragma PY_CODE_GEN block_start
-__kernel 
+
+/**
+This kernel calulates all random numbers.
+It will only forward those numbers to the memory access kernel, which are within
+a specific range. 
+*/
+__kernel
 void addressCalculationKernel$rep$(ulong m, ulong data_chunk, __constant DATA_TYPE_UNSIGNED* ran_const) {
 	DATA_TYPE_UNSIGNED ran[UPDATE_SPLIT];
 	#pragma unroll GLOBAL_MEM_UNROLL
