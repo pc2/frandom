@@ -2,7 +2,6 @@
 #define DATA_TYPE_UNSIGNED unsigned DATA_TYPE
 
 #define BIT_SIZE (sizeof(DATA_TYPE) * 8)
-#define UPDATE_SPLIT 128
 #define GLOBAL_MEM_UNROLL 8
 
 #pragma OPENCL EXTENSION cl_intel_channels: enable
@@ -30,6 +29,7 @@ Contain the random value, the old data and a boolean value to stop processing.
  */
 typedef struct {
 	bool isRunning;
+	bool isValid;
 	DATA_TYPE_UNSIGNED ran;
 	DATA_TYPE_UNSIGNED actual_index;
 }  access_data;
@@ -48,60 +48,80 @@ random accesses to the global memory.
 /**
 This kernel calulates all random numbers.
 It will only forward those numbers to the memory access kernel, which are within
-a specific range. 
+a specific range.
 */
 __kernel
-void addressCalculationKernel$rep$(ulong m, ulong data_chunk, __constant DATA_TYPE_UNSIGNED* ran_const) {
-	DATA_TYPE_UNSIGNED ran[UPDATE_SPLIT];
-	#pragma unroll GLOBAL_MEM_UNROLL
-	for (int i=0; i< UPDATE_SPLIT; i++) {
-		ran[i] = ran_const[i];
-	}
+void addressCalculationKernel$rep$(ulong m, ulong data_chunk) {
+	DATA_TYPE_UNSIGNED ran = 1;
 
 	#ifndef SINGLE_KERNEL
 	DATA_TYPE_UNSIGNED address_start = $rep$ * data_chunk;
 	#endif
-	uint iters = (4 * m) / UPDATE_SPLIT;
-	#pragma loop_coalesce 1
+	uint iters = (4 * m);
 	for (uint i=0; i< iters; i++) {
-		for (int j=0; j<UPDATE_SPLIT; j++) {
-			DATA_TYPE_UNSIGNED v = 0;
-			DATA_TYPE_UNSIGNED ran_tmp = ran[j];
-			if (((DATA_TYPE) ran_tmp) < 0) {
-				v = POLY;
-			}
-			ran_tmp = (ran_tmp << 1) ^ v;
-			ran[j] = ran_tmp;
-			DATA_TYPE_UNSIGNED address = ran_tmp & (m - 1);
-			bool end = (i == iters - 1) & (j == UPDATE_SPLIT - 1);
-			#ifndef SINGLE_KERNEL
-			DATA_TYPE_UNSIGNED actual_index = address - address_start;
-			if ((actual_index < data_chunk) | end) {
-				access_data adata;
-				adata.isRunning = !end;
-				adata.ran = ran_tmp;
-				adata.actual_index = actual_index;
-				write_channel_intel(read_channel[$rep$], adata);
-			}
-			#else
+		DATA_TYPE_UNSIGNED v = 0;
+		if (((DATA_TYPE) ran) < 0) {
+			v = POLY;
+		}
+		ran = (ran << 1) ^ v;
+		DATA_TYPE_UNSIGNED address = ran & (m - 1);
+		bool end = (i == iters - 1);
+		#ifndef SINGLE_KERNEL
+		DATA_TYPE_UNSIGNED actual_index = address - address_start;
+		if ((actual_index < data_chunk) | end) {
 			access_data adata;
 			adata.isRunning = !end;
-			adata.ran = ran_tmp;
-			adata.actual_index = address;
+			adata.ran = ran;
+			adata.isValid = (actual_index < data_chunk);
+			adata.actual_index = actual_index;
 			write_channel_intel(read_channel[$rep$], adata);
-			#endif
 		}
+		#else
+		access_data adata;
+		adata.isRunning = !end;
+		adata.ran = ran;
+		adata.isValid = true;
+		adata.actual_index = address;
+		write_channel_intel(read_channel[$rep$], adata);
+		#endif
 	}
 }
 
+#define LOOP_DELAY 2
+
 __kernel
 void accessMemory$rep$(__global DATA_TYPE* restrict data) {
+
+	// Achieve II of 1 by using a buffer to store incoming update requests
+	// The size should be as small as possible to prevent update errors due to
+	// buffered values
+	access_data load_shift_data[LOOP_DELAY];
+	DATA_TYPE loaded_data[LOOP_DELAY];
+
 	bool isRunning = true;
+	// While this kernel gets valid data, modify values in memory
+	// First load multiple data items from memory and then store them back
 	while (isRunning) {
-		access_data adata = read_channel_intel(read_channel[$rep$]);
-		isRunning = adata.isRunning;
-		if (adata.isRunning) {
-			data[adata.actual_index] ^= adata.ran;
+
+		// load data from global memory
+		for (int ld =0; ld <LOOP_DELAY; ld++) {
+			if (isRunning) {
+				load_shift_data[ld] = read_channel_intel(read_channel[$rep$]);
+				isRunning = load_shift_data[ld].isRunning;
+			}
+			else {
+				load_shift_data[ld].isValid = false;
+			}
+			if (load_shift_data[ld].isValid) {
+				loaded_data[ld] = data[load_shift_data[ld].actual_index];
+			}
+		}
+
+		// store data back to global memory
+		for (int ld=0; ld<LOOP_DELAY; ld++) {
+			if (load_shift_data[ld].isValid) {
+				data[load_shift_data[ld].actual_index] = loaded_data[ld] ^ load_shift_data[ld].ran;
+			}
 		}
 	}
 }

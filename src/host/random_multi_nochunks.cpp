@@ -84,14 +84,14 @@ int main(int argc, char * argv[])
 	std::vector<cl::Device> DeviceList;
 	err = PlatformList[0].getDevices(CL_DEVICE_TYPE_ACCELERATOR, &DeviceList);
 	assert(err==CL_SUCCESS);
-	
+
 	//Create Context
 	cl::Context context(DeviceList);
 	assert(err==CL_SUCCESS);
     std::cout << "Device Name:   " << DeviceList[0].getInfo<CL_DEVICE_NAME>() << std::endl;
 
     if  ( (quantum = checktick()) >= 1) {
-        std::cout << "Your clock granularity/precision appears to be " << quantum 
+        std::cout << "Your clock granularity/precision appears to be " << quantum
                 << " microseconds." << std::endl;
     }
     else {
@@ -114,7 +114,7 @@ int main(int argc, char * argv[])
         used_kernel = argv[1];
     }
     fpga_setup_and_execution(context, DeviceList, used_kernel);
-    
+
 
     // Print results
     std::cout << "       best       mean      GUOPS      error" << std::endl;
@@ -130,7 +130,7 @@ void fpga_setup_and_execution(cl::Context context, std::vector<cl::Device> Devic
     if (!aocx_stream.is_open()){
         std::cerr << "Not possible to open from given file!" << std::endl;
     }
-    
+
 	std::string prog(std::istreambuf_iterator<char>(aocx_stream), (std::istreambuf_iterator<char>()));
     aocx_stream.seekg(0, aocx_stream.end);
     unsigned file_size = aocx_stream.tellg();
@@ -220,20 +220,14 @@ double mysecond()
 }
 
 void calculate(cl::Context context, cl::Device device, cl::Program program){
-	DATA_TYPE_UNSIGNED* random;
-	posix_memalign((void **)&random,64, sizeof(DATA_TYPE_UNSIGNED)*RANDOM_LENGTH);
     int err;
 
-	for (DATA_TYPE i=0; i<RANDOM_LENGTH; i++) {
-		random[i] = starts((4 * DATA_LENGTH) / RANDOM_LENGTH * i);
-	}
 	std::cout << "Prepare FPGA instances" << std::endl;
 
 	std::vector<cl::CommandQueue> compute_queue;
 	std::vector<cl::CommandQueue> access_queue;
 	std::vector<cl::Buffer> Buffer_data;
-	std::vector<cl::Buffer> Buffer_random;
-	std::vector<cl::Kernel> calckernel;	
+	std::vector<cl::Kernel> calckernel;
 	std::vector<cl::Kernel> accesskernel;
 	std::vector<DATA_TYPE*> data_sets;
 
@@ -243,13 +237,12 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 		data_sets.push_back(data);
 		// Prepare kernel with ID $rep$
 		compute_queue.push_back(cl::CommandQueue(context, device));
-		access_queue.push_back(cl::CommandQueue(context, device)); 
+		access_queue.push_back(cl::CommandQueue(context, device));
 		Buffer_data.push_back(cl::Buffer(context, CL_CHANNEL_1_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS)));
 
 		// manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
 		// TODO: change this in case the preprocessor define changes
 		int channel = (r % 8) << 16;
-		Buffer_random.push_back(cl::Buffer(context, CL_MEM_WRITE_ONLY| channel , sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH));
 
 		calckernel.push_back(cl::Kernel(program, ("addressCalculationKernel" + std::to_string(r)).c_str() , &err));
 		assert(err==CL_SUCCESS);
@@ -258,8 +251,6 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 		assert(err==CL_SUCCESS);
 		err = calckernel[r].setArg(1, DATA_TYPE_UNSIGNED(DATA_LENGTH / REPLICATIONS));
 		assert(err==CL_SUCCESS);
-		err = calckernel[r].setArg(2, Buffer_random[r]);
-		assert(err==CL_SUCCESS);		
 
 		accesskernel.push_back(cl::Kernel(program, ("accessMemory" + std::to_string(r)).c_str() , &err));
 		assert(err==CL_SUCCESS);
@@ -281,8 +272,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 		}
 		std::cout << "Prepared data for the next run" << std::endl;
 		for (int r=0; r < REPLICATIONS; r++) {
-			compute_queue[r].enqueueWriteBuffer(Buffer_random[r], CL_TRUE, 0, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH, random);
-			compute_queue[r].enqueueWriteBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
+	        compute_queue[r].enqueueWriteBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
 		}
         t = mysecond();
 		for (int r=0; r < REPLICATIONS; r++) {
@@ -303,7 +293,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 
 	for (int r=0; r < REPLICATIONS; r++) {
 		compute_queue[r].enqueueReadBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
-	} 
+	}
 	DATA_TYPE* data;
     posix_memalign((void **)&data,64, (sizeof(DATA_TYPE)*DATA_LENGTH));
 	for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
@@ -326,65 +316,11 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	double correct = 0;
 	for (int i=0; i< DATA_LENGTH; i++) {
 		if (data[i] != i) {
+            std::cout << int(data[i]) << " " << int(i) << std::endl;
 			correct++;
 		}
 	}
 
     timearray[NTIMES] = correct;
     free((void*)data);
-}
-
-/**
- Pseudo random number generator for memory accesses
-
- */
-DATA_TYPE_UNSIGNED starts(DATA_TYPE n) {
-	DATA_TYPE_UNSIGNED m2[BIT_SIZE];
-
-	while (n < 0) {
-		n += PERIOD;
-	}
-	while (n > 0) {
-		n -= PERIOD;
-	}
-
-	if (n == 0) {
-		return 1;
-	}
-
-	DATA_TYPE_UNSIGNED temp = 1;
-	for (int i=0;i<BIT_SIZE;i++) {
-		m2[i] = temp;
-		for (int j=0; j<2;j++) {
-			DATA_TYPE_UNSIGNED v = 0;
-			if (((DATA_TYPE) temp) < 0) {
-				v = POLY;
-			}
-			temp = (temp << 1) ^ v;
-		}
-	}
-	DATA_TYPE i = BIT_SIZE - 2;
-	while (i >= 0 && !((n >> i) & 1)) {
-		i--;
-	}
-
-	DATA_TYPE_UNSIGNED ran = 2;
-	while (i > 0) {
-		temp = 0;
-		for (int j=0; j < BIT_SIZE; j++) {
-			if ((ran >> j) & 1) {
-				temp ^= m2[j];
-			}
-		}
-		ran = temp;
-		i--;
-		if ((n>>i) & 1) {
-			DATA_TYPE_UNSIGNED v = 0;
-			if (((DATA_TYPE) ran) < 0) {
-				v = POLY;
-			}
-			ran = (ran << 1) ^v;
-		}
-	}
-	return ran;
 }
