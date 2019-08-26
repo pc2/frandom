@@ -57,8 +57,8 @@ void addressCalculationKernel$rep$(ulong m, ulong data_chunk) {
 	#ifndef SINGLE_KERNEL
 	DATA_TYPE_UNSIGNED address_start = $rep$ * data_chunk;
 	#endif
-	uint iters = (4 * m);
-	for (uint i=0; i< iters; i++) {
+	DATA_TYPE_UNSIGNED iters = (4 * m);
+	for (DATA_TYPE_UNSIGNED i=0; i< iters; i++) {
 		DATA_TYPE_UNSIGNED v = 0;
 		if (((DATA_TYPE) ran) < 0) {
 			v = POLY;
@@ -88,15 +88,20 @@ void addressCalculationKernel$rep$(ulong m, ulong data_chunk) {
 }
 
 #define LOOP_DELAY 2
+/**
+ Make the updates at the calculated addresses
 
+ data is volatile to remove the cache. Since we have random accesses the cache
+ will have a high miss rate anyway.
+*/
 __kernel
-void accessMemory$rep$(__global DATA_TYPE* restrict data) {
+void accessMemory$rep$(__global DATA_TYPE_UNSIGNED* restrict volatile data) {
 
 	// Achieve II of 1 by using a buffer to store incoming update requests
 	// The size should be as small as possible to prevent update errors due to
 	// buffered values
 	access_data load_shift_data[LOOP_DELAY];
-	DATA_TYPE loaded_data[LOOP_DELAY];
+	DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
 
 	bool isRunning = true;
 	// While this kernel gets valid data, modify values in memory

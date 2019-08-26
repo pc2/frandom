@@ -229,20 +229,20 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	std::vector<cl::Buffer> Buffer_data;
 	std::vector<cl::Kernel> calckernel;
 	std::vector<cl::Kernel> accesskernel;
-	std::vector<DATA_TYPE*> data_sets;
+	std::vector<DATA_TYPE_UNSIGNED*> data_sets;
 
 	for (int r=0; r < REPLICATIONS; r++) {
-		DATA_TYPE* data;
+		DATA_TYPE_UNSIGNED* data;
     	posix_memalign((void **)&data,64, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS));
 		data_sets.push_back(data);
 		// Prepare kernel with ID $rep$
 		compute_queue.push_back(cl::CommandQueue(context, device));
 		access_queue.push_back(cl::CommandQueue(context, device));
-		Buffer_data.push_back(cl::Buffer(context, CL_CHANNEL_1_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS)));
 
-		// manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
-		// TODO: change this in case the preprocessor define changes
-		int channel = (r % 8) << 16;
+        // manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
+        // TODO: change this in case the preprocessor define changes
+        int channel = (r % 8) << 16;
+		Buffer_data.push_back(cl::Buffer(context, channel, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS)));
 
 		calckernel.push_back(cl::Kernel(program, ("addressCalculationKernel" + std::to_string(r)).c_str() , &err));
 		assert(err==CL_SUCCESS);
@@ -264,9 +264,9 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	std::cout << "Start actual execution" << std::endl;
     t = mysecond();
     for (int i = 0; i < NTIMES; i++){
-		for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
+		for (DATA_TYPE_UNSIGNED r =0; r < REPLICATIONS; r++) {
 			std::cout << "row" << r << std::endl;
-			for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
+			for (DATA_TYPE_UNSIGNED j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
 				data_sets[r][j] = r*(DATA_LENGTH / REPLICATIONS) + j;
 			}
 		}
@@ -294,17 +294,17 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	for (int r=0; r < REPLICATIONS; r++) {
 		compute_queue[r].enqueueReadBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
 	}
-	DATA_TYPE* data;
+	DATA_TYPE_UNSIGNED* data;
     posix_memalign((void **)&data,64, (sizeof(DATA_TYPE)*DATA_LENGTH));
-	for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
-		for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
+    for (DATA_TYPE_UNSIGNED r =0; r < REPLICATIONS; r++) {
+	    for (DATA_TYPE_UNSIGNED j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
 			data[r*(DATA_LENGTH / REPLICATIONS) + j] = data_sets[r][j];
 		}
 	}
 
 	/* --- Check Results --- */
 	DATA_TYPE_UNSIGNED temp = 1;
-	for (int i =0;i<4*DATA_LENGTH; i++) {
+	for (DATA_TYPE_UNSIGNED i =0;i<4*DATA_LENGTH; i++) {
 		DATA_TYPE_UNSIGNED v = 0;
 		if (((DATA_TYPE) temp) < 0) {
 			v = POLY;
@@ -314,7 +314,7 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 	}
 
 	double correct = 0;
-	for (int i=0; i< DATA_LENGTH; i++) {
+	for (DATA_TYPE_UNSIGNED i=0; i< DATA_LENGTH; i++) {
 		if (data[i] != i) {
             std::cout << int(data[i]) << " " << int(i) << std::endl;
 			correct++;
