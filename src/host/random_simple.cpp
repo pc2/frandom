@@ -26,8 +26,8 @@
 #define DATA_LENGTH 67108864
 #endif
 
-#ifndef RANDOM_LENGTH
-#define RANDOM_LENGTH 128
+#ifndef UPDATE_SPLIT
+#define UPDATE_SPLIT 128
 #endif
 
 #ifndef NTIMES
@@ -41,7 +41,8 @@
 #define DATA_TYPE_UNSIGNED cl_ulong
 #endif
 
-#define BIT_SIZE (sizeof(DATA_TYPE) * 8)
+#define BIT_SIZE sizeof(DATA_TYPE) * 8
+//64
 
 #ifndef FPGA_KERNEL_FILE_GLOBAL
 #define FPGA_KERNEL_FILE_GLOBAL "random_access_kernels.aocx"
@@ -153,10 +154,10 @@ void fpga_setup_and_execution(cl::Context context, std::vector<cl::Device> Devic
 void print_results() {
     std::cout << std::setw(11) << "type" << std::setw(11) << "best" << std::setw(11)
               << "mean" << std::setw(11) << "GUOPS"
-              << std::setw(11) << "error" / DATA_LENGTH << std::endl;
+              << std::setw(11) << "error" << std::endl;
 
     // Calculate performance for kernel runtime only
-    double gups = (4 * DATA_LENGTH) / 1000000000;
+    double gups = double(4 * DATA_LENGTH) / 1000000000;
     double tmean = 0;
     double tmin = DBL_MAX;
     //calculate mean
@@ -168,7 +169,7 @@ void print_results() {
     }
     tmean = tmean / NTIMES;
 
-    double error_count = timearray[NTIMES];
+    double error_count = timearray[0][NTIMES];
     std::cout << std::setw(11) << "calc" << std::setw(11) << tmin << std::setw(11)
               << tmean << std::setw(11) << gups / tmin
               << std::setw(11) << (100.0 * error_count) / DATA_LENGTH << std::endl;
@@ -177,7 +178,7 @@ void print_results() {
     tmean = 0;
     tmin = DBL_MAX;
     for (int i=0; i<NTIMES;i++) {
-        double tmp_total = timearray[0][i] timearray[1][i];
+        double tmp_total = timearray[0][i] + timearray[1][i];
         tmean +=  tmp_total;
         if (tmp_total < tmin) {
             tmin = tmp_total;
@@ -241,32 +242,27 @@ double mysecond()
 
 void calculate(cl::Context context, cl::Device device, cl::Program program){
     DATA_TYPE_UNSIGNED* random;
-    posix_memalign((void **)&random,64, sizeof(DATA_TYPE_UNSIGNED)*RANDOM_LENGTH);
+    posix_memalign((void **)&random,64, sizeof(DATA_TYPE_UNSIGNED)*UPDATE_SPLIT);
     int err;
-
-    for (DATA_TYPE i=0; i<RANDOM_LENGTH; i++) {
-        random[i] = starts((4 * DATA_LENGTH) / RANDOM_LENGTH * i);
-    }
     std::cout << "Prepare FPGA instances" << std::endl;
 
     std::vector<cl::CommandQueue> compute_queue;
     std::vector<cl::Buffer> Buffer_data;
     std::vector<cl::Buffer> Buffer_random;
     std::vector<cl::Kernel> accesskernel;
-    std::vector<DATA_TYPE*> data_sets;
+    std::vector<DATA_TYPE_UNSIGNED*> data_sets;
 
     for (int r=0; r < REPLICATIONS; r++) {
-        DATA_TYPE* data;
+        DATA_TYPE_UNSIGNED* data;
         posix_memalign((void **)&data,64, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS));
         data_sets.push_back(data);
         // Prepare kernel with ID $rep$
         compute_queue.push_back(cl::CommandQueue(context, device));
-        Buffer_data.push_back(cl::Buffer(context, CL_CHANNEL_1_INTELFPGA, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS)));
 
         // manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
         // TODO: change this in case the preprocessor define changes
         int channel = (r % 8) << 16;
-        Buffer_random.push_back(cl::Buffer(context, CL_MEM_WRITE_ONLY| channel , sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH));
+        Buffer_data.push_back(cl::Buffer(context, channel, sizeof(DATA_TYPE_UNSIGNED)*(DATA_LENGTH / REPLICATIONS)));
 
         accesskernel.push_back(cl::Kernel(program, ("accessMemory" + std::to_string(r)).c_str() , &err));
         assert(err==CL_SUCCESS);
@@ -277,8 +273,6 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
         assert(err==CL_SUCCESS);
         err = accesskernel[r].setArg(2, DATA_TYPE_UNSIGNED(DATA_LENGTH / REPLICATIONS));
         assert(err==CL_SUCCESS);
-        err = accesskernel[r].setArg(3, Buffer_random[r]);
-        assert(err==CL_SUCCESS);
     }
 
     double t;
@@ -286,20 +280,16 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
     for (int i = 0; i < NTIMES; i++){
         std::cout << "Start run " << i << std::endl;
         t = mysecond();
-        for (DATA_TYPE i=0; i<RANDOM_LENGTH; i++) {
-            random[i] = starts((4 * DATA_LENGTH) / RANDOM_LENGTH * i);
-        }
-        for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
-            for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
+        for (DATA_TYPE_UNSIGNED r =0; r < REPLICATIONS; r++) {
+            for (DATA_TYPE_UNSIGNED j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
                 #ifndef EMBARRASSINGLY_PARALLEL
                 data_sets[r][j] = r*(DATA_LENGTH / REPLICATIONS) + j;
                 #else
-                data_sets[r][j] = r*(DATA_LENGTH / REPLICATIONS) + j;
+                data_sets[r][j] = j;
                 #endif
             }
         }
         for (int r=0; r < REPLICATIONS; r++) {
-            compute_queue[r].enqueueWriteBuffer(Buffer_random[r], CL_TRUE, 0, sizeof(DATA_TYPE_UNSIGNED) * RANDOM_LENGTH, random);
             compute_queue[r].enqueueWriteBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
         }
         timearray[0][i] = mysecond() - t;
@@ -321,18 +311,18 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
     for (int r=0; r < REPLICATIONS; r++) {
         compute_queue[r].enqueueReadBuffer(Buffer_data[r], CL_TRUE, 0, sizeof(DATA_TYPE)*(DATA_LENGTH / REPLICATIONS), data_sets[r]);
     }
-    DATA_TYPE* data;
+    DATA_TYPE_UNSIGNED* data;
     posix_memalign((void **)&data,64, (sizeof(DATA_TYPE)*DATA_LENGTH));
-    for (DATA_TYPE j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
-        for (DATA_TYPE r =0; r < REPLICATIONS; r++) {
+    for (ulong j=0; j<(DATA_LENGTH / REPLICATIONS); j++) {
+        for (ulong r =0; r < REPLICATIONS; r++) {
             data[r*(DATA_LENGTH / REPLICATIONS) + j] = data_sets[r][j];
         }
     }
 
     /* --- Check Results --- */
     DATA_TYPE_UNSIGNED temp = 1;
-    for (int i =0;i<4*DATA_LENGTH; i++) {
-        DATA_TYPE_UNSIGNED v = 0;
+    for (DATA_TYPE_UNSIGNED i=0; i<4L*DATA_LENGTH; i++) {
+        DATA_TYPE v = 0;
         if (((DATA_TYPE) temp) < 0) {
             v = POLY;
         }
@@ -341,8 +331,9 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
     }
 
     double correct = 0;
-    for (int i=0; i< DATA_LENGTH; i++) {
+    for (DATA_TYPE_UNSIGNED i=0; i< DATA_LENGTH; i++) {
         if (data[i] != i) {
+            std::cout << int(data[i]) << " " << int(i) << std::endl;
             correct++;
         }
     }
@@ -373,16 +364,22 @@ DATA_TYPE_UNSIGNED starts(DATA_TYPE n) {
     for (int i=0;i<BIT_SIZE;i++) {
         m2[i] = temp;
         for (int j=0; j<2;j++) {
-            DATA_TYPE_UNSIGNED v = 0;
+            DATA_TYPE v = 0;
             if (((DATA_TYPE) temp) < 0) {
                 v = POLY;
             }
             temp = (temp << 1) ^ v;
         }
     }
-    DATA_TYPE i = BIT_SIZE - 2;
-    while (i >= 0 && !((n >> i) & 1)) {
-        i--;
+    // DATA_TYPE i = BIT_SIZE - 2;
+    // while (i >= 0 && !((n >> i) & 1)) {
+    //     i--;
+    // }
+    int i = 0;
+    for (i=BIT_SIZE - 2; i>=0; i--) {
+        if ((n >> i) & 1){
+            break;
+        }
     }
 
     DATA_TYPE_UNSIGNED ran = 2;
@@ -396,7 +393,7 @@ DATA_TYPE_UNSIGNED starts(DATA_TYPE n) {
         ran = temp;
         i--;
         if ((n>>i) & 1) {
-            DATA_TYPE_UNSIGNED v = 0;
+            DATA_TYPE v = 0;
             if (((DATA_TYPE) ran) < 0) {
                 v = POLY;
             }
