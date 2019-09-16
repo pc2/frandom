@@ -47,9 +47,9 @@ endif
 # change for compilation and synthesis.
 #
 ##
-TYPE := simple
+TYPE := single
 REPLICATIONS := 4
-UPDATE_SPLIT := 128
+UPDATE_SPLIT := 1
 GLOBAL_MEM_UNROLL := 8
 BOARD := p520_max_sg280l
 GLOBAL_MEM_SIZE := 1073741824L
@@ -85,7 +85,7 @@ $(info BUILD_SUFFIX            = $(BUILD_SUFFIX))
 $(info AOC_FLAGS               = $(AOC_FLAGS))
 $(info REPLICATIONS            = $(REPLICATIONS))
 $(info GLOBAL_MEM_SIZE         = $(GLOBAL_MEM_SIZE))
-$(info UPDATE_SPLIT            = $(UPDATE_SPLIT))
+$(info GLOBAL_MEM_UNROLL            = $(GLOBAL_MEM_UNROLL))
 $(info TYPE                    = $(TYPE))
 $(info EMBARRASSINGLY_PARALLEL = $(EMBARRASSINGLY_PARALLEL))
 $(info ***************************)

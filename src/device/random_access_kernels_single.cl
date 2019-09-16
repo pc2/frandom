@@ -11,7 +11,7 @@
 #endif
 
 #ifndef GLOBAL_MEM_UNROLL
-#define GLOBAL_MEM_UNROLL 8
+#define GLOBAL_MEM_UNROLL 4
 #endif
 
 #define POLY 7
@@ -24,7 +24,7 @@
 #define SINGLE_KERNEL
 #endif
 
-#define LOOP_DELAY 2
+#define LOOP_DELAY 1024
 
 #pragma PY_CODE_GEN block_start
 __kernel
@@ -34,17 +34,19 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 	DATA_TYPE_UNSIGNED ran = 1;
 
 	#ifndef SINGLE_KERNEL
-	DATA_TYPE_UNSIGNED address_start = $repl$ * data_chunk;
+	DATA_TYPE_UNSIGNED const address_start = $repl$ * data_chunk;
 	#endif
 
-	DATA_TYPE_UNSIGNED mupdate = 4 * m;
-
-	DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
-	DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
-	DATA_TYPE_UNSIGNED update_val[LOOP_DELAY];
+	DATA_TYPE_UNSIGNED const mupdate = 4 * m;
 
 	// do random accesses
+	#pragma ivdep
 	for (DATA_TYPE_UNSIGNED i=0; i< mupdate / LOOP_DELAY; i++) {
+
+		DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
+		DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
+		DATA_TYPE_UNSIGNED writeback_data[LOOP_DELAY];
+		DATA_TYPE_UNSIGNED update_val[LOOP_DELAY];
 
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			DATA_TYPE v = 0;
@@ -59,6 +61,10 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 			#else
 			local_address[ld] = address;
 			#endif
+		}
+
+		#pragma unroll GLOBAL_MEM_UNROLL
+		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			loaded_data[ld] = data[local_address[ld]];
 			#else
@@ -67,6 +73,8 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 			}
 			#endif
 		}
+
+		#pragma unroll GLOBAL_MEM_UNROLL
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			data[local_address[ld]] = loaded_data[ld] ^update_val[ld];

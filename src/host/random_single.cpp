@@ -66,7 +66,7 @@ static double timearray[2][NTIMES + 1];
 int main(int argc, char * argv[])
 {
     std::cout.setf(std::ios::fixed, std::ios::floatfield);
-    std::cout.precision(3);
+    std::cout.precision(6);
     int quantum;
 
     int err;
@@ -261,8 +261,20 @@ void calculate(cl::Context context, cl::Device device, cl::Program program){
 
         // manually calculate channel flag specified in cl_ext_intelfpga.h as CL_CHANNEL_N_INTELFPGA
         // TODO: change this in case the preprocessor define changes
-        int channel = (r % 8) << 16;
-        Buffer_data.push_back(cl::Buffer(context, channel, sizeof(DATA_TYPE_UNSIGNED)*(DATA_LENGTH / REPLICATIONS)));
+        int channel = 0;
+        switch((r % 4) + 1) {
+            case 1: channel = CL_CHANNEL_1_INTELFPGA; break;
+            case 2: channel = CL_CHANNEL_2_INTELFPGA; break;
+            case 3: channel = CL_CHANNEL_3_INTELFPGA; break;
+            case 4: channel = CL_CHANNEL_4_INTELFPGA; break;
+            case 5: channel = CL_CHANNEL_5_INTELFPGA; break;
+            case 6: channel = CL_CHANNEL_6_INTELFPGA; break;
+            case 7: channel = CL_CHANNEL_7_INTELFPGA; break;
+        }
+        channel = 0;
+        //channel = CL_CHANNEL_1_INTELFPGA;
+        //int channel = ((r % 7) + 1) << 16;
+        Buffer_data.push_back(cl::Buffer(context, channel | CL_MEM_READ_WRITE, sizeof(DATA_TYPE_UNSIGNED)*(DATA_LENGTH / REPLICATIONS)));
 
         accesskernel.push_back(cl::Kernel(program, ("accessMemory" + std::to_string(r)).c_str() , &err));
         assert(err==CL_SUCCESS);
