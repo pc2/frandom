@@ -56,11 +56,11 @@ GLOBAL_MEM_SIZE := 1073741824L
 AOC_FLAGS :=-no-interleaving=default
 ## End build settings
 
-GEN_SRC := $(SRC_DIR)host/random_$(TYPE).cpp
 GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
 
-SRCS := random_$(TYPE)_$(UPDATE_SPLIT)_$(REPLICATIONS).cpp
-TARGET := $(SRCS:.cpp=)$(EXT_BUILD_SUFFIX)
+MAIN_SRC := random_$(TYPE).cpp
+SRCS := $(patsubst %, $(SRC_DIR)host/%, $(MAIN_SRC) benchmark_helper.cpp)
+TARGET := $(MAIN_SRC:.cpp=)$(EXT_BUILD_SUFFIX)
 KERNEL_SRCS := random_access_kernels_$(TYPE)_$(UPDATE_SPLIT)_$(REPLICATIONS).cl
 KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)
 
@@ -111,19 +111,14 @@ info:
 	$(info Additional compile flags for the kernels can be provided in AOC_FLAGS.)
 	$(info To disable memory interleaving: make kernel AOC_FLAGS=-no-interleaving=default)
 
-$(GEN_SRC_DIR)$(SRCS): $(GEN_SRC)
-	$(MKDIR_P) $(GEN_SRC_DIR)
-	$(CODE_GENERATOR) $(GEN_SRC) -o $(GEN_SRC_DIR)$(SRCS) -p replications=$(REPLICATIONS)
-
 $(GEN_SRC_DIR)$(KERNEL_SRCS): $(GEN_KERNEL_SRC)
 	$(MKDIR_P) $(GEN_SRC_DIR)
 	$(CODE_GENERATOR) $(GEN_KERNEL_SRC) -o $(GEN_SRC_DIR)$(KERNEL_SRCS) -p replications=$(REPLICATIONS)
 
-host: $(GEN_SRC_DIR)$(SRCS)
+host: $(SRCS)
 	$(MKDIR_P) $(BIN_DIR)
 	$(CXX) $(CXX_FLAGS) $(AOCL_COMPILE_CONFIG) $(COMMON_FLAGS) -DDATA_LENGTH=$(GLOBAL_MEM_SIZE) \
-	-DFPGA_KERNEL_FILE_GLOBAL=\"$(KERNEL_TARGET).aocx\" \
-	$(GEN_SRC_DIR)$(SRCS) $(AOCL_LINK_CONFIG) -o $(BIN_DIR)$(TARGET)
+	$(SRCS) $(AOCL_LINK_CONFIG) -o $(BIN_DIR)$(TARGET)
 
 kernel: $(GEN_SRC_DIR)$(KERNEL_SRCS)
 	$(MKDIR_P) $(BIN_DIR)
