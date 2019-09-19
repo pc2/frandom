@@ -26,7 +26,7 @@ $(info QUARTUS_VERSION not defined! Quartus is not set up correctly or version i
 $(info Define the variable with the used Quartus version by giving it as an argument to make: e.g. make QUARTUS_VERSION=17.1.0)
 $(error QUARTUS_VERSION not defined!)
 else
-$(info QUARTUS_VERSION     = $(QUARTUS_VERSION))
+$(info QUARTUS_VERSION         = $(QUARTUS_VERSION))
 endif
 
 # OpenCL compile and link flags.
@@ -49,7 +49,6 @@ endif
 ##
 TYPE := single
 REPLICATIONS := 4
-UPDATE_SPLIT := 1
 GLOBAL_MEM_UNROLL := 8
 BOARD := p520_max_sg280l
 GLOBAL_MEM_SIZE := 1073741824L
@@ -61,10 +60,10 @@ GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
 MAIN_SRC := random_$(TYPE).cpp
 SRCS := $(patsubst %, $(SRC_DIR)host/%, $(MAIN_SRC) benchmark_helper.cpp)
 TARGET := $(MAIN_SRC:.cpp=)$(EXT_BUILD_SUFFIX)
-KERNEL_SRCS := random_access_kernels_$(TYPE)_$(UPDATE_SPLIT)_$(REPLICATIONS).cl
+KERNEL_SRCS := random_access_kernels_$(TYPE)_$(REPLICATIONS)_$(GLOBAL_MEM_UNROLL).cl
 KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)
 
-COMMON_FLAGS := -DUPDATE_SPLIT=$(UPDATE_SPLIT) -DREPLICATIONS=$(REPLICATIONS)
+COMMON_FLAGS := -DREPLICATIONS=$(REPLICATIONS)
 AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) -DGLOBAL_MEM_UNROLL=$(GLOBAL_MEM_UNROLL)
 
 ifdef DATA_TYPE
@@ -78,18 +77,13 @@ endif
 
 CXX_FLAGS += -I. --std=c++11
 
-ifdef EMBARRASSINGLY_PARALLEL
-COMMON_FLAGS += -DEMBARRASSINGLY_PARALLEL
-endif
-
 $(info BOARD                   = $(BOARD))
 $(info BUILD_SUFFIX            = $(BUILD_SUFFIX))
 $(info AOC_FLAGS               = $(AOC_FLAGS))
 $(info REPLICATIONS            = $(REPLICATIONS))
 $(info GLOBAL_MEM_SIZE         = $(GLOBAL_MEM_SIZE))
-$(info GLOBAL_MEM_UNROLL            = $(GLOBAL_MEM_UNROLL))
+$(info GLOBAL_MEM_UNROLL       = $(GLOBAL_MEM_UNROLL))
 $(info TYPE                    = $(TYPE))
-$(info EMBARRASSINGLY_PARALLEL = $(EMBARRASSINGLY_PARALLEL))
 $(info ***************************)
 
 default: info

@@ -152,7 +152,7 @@ parseProgramParameters(int argc, char * argv[]) {
 }
 
 void printResults(std::shared_ptr<ExecutionResults> results, size_t dataSize) {
-    std::cout << std::setw(ENTRY_SPACE) << "type" << std::setw(ENTRY_SPACE)
+    std::cout << std::setw(ENTRY_SPACE)
               << "best" << std::setw(ENTRY_SPACE) << "mean"
               << std::setw(ENTRY_SPACE) << "GUOPS"
               << std::setw(ENTRY_SPACE) << "error" << std::endl;
@@ -169,7 +169,7 @@ void printResults(std::shared_ptr<ExecutionResults> results, size_t dataSize) {
     }
     tmean = tmean / results->times.size();
 
-    std::cout << std::setw(ENTRY_SPACE) << "calc" << std::setw(ENTRY_SPACE)
+    std::cout << std::setw(ENTRY_SPACE)
               << tmin << std::setw(ENTRY_SPACE) << tmean
               << std::setw(ENTRY_SPACE) << gups / tmin
               << std::setw(ENTRY_SPACE) << (100.0 * results->errorRate)

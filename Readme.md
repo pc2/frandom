@@ -8,7 +8,7 @@ The implementation follows the Python reference implementation given in  _Introd
 
 ## Build
 
-The Makefile will generate the host code using the code generator given in a submodule.
+The Makefile will generate the device code using the code generator given in a submodule.
 So to make use of the code generation make sure to check out the repository recursively.
 
 The code has the following dependencies:
@@ -23,11 +23,10 @@ Makefile:
 1. Check the location of the used compilers (A C++ compiler and the aoc/aocl)
 2. Update the board name in the Makefile or give the new board name as an argument BOARD
    to make.
-3. Set the size of the random number array with UPDATE_SPLIT.
-4. Set the number of kernels that should be generated with REPLICATIONS.
-5. Set the array sizes for the global memory with GLOBAL_MEM_SIZE. It should be
+3. Set the number of kernels that should be generated with REPLICATIONS.
+4. Set the array sizes for the global memory with GLOBAL_MEM_SIZE. It should be
 half of the available global memory.
-6. Build the host program or the kernels by using the available build targets.
+5. Build the host program or the kernels by using the available build targets.
 
 For more detailed information about the available build targets call:
 
@@ -58,19 +57,20 @@ It can be used to disable memory interleaving for the kernel:
 
 ## Execution
 
-The created host uses the kernels with the same build suffix by default.
-It tries to load it from the same directory it is executed in.
+The created host needs the kernel file as a program argument.
+The kernel file has to be specified using the '-f' flag like the following:
 
-    ./random_18.1.1
+    ./random_single_18.1.1 -f path/to/file.aocx
 
-will try to load the kernel file with the name
-random_access_kernel_18.1.1.aocx by default.
-Additionally, the executable will interpret the first argument given as
-the path to the kernel that should be used.
-For example to use the kernel _other.aocx_:
+It is also possible to give additional settings. To get a more detailed overview
+of the available settings execute:
 
-    ./random_18.1.1 other.aocx
-
-Also, relative and absolute paths to the kernel can be given.
+    ./random_single -h
 
 ## Result interpretation
+
+The benchmark will measure the elapsed time for performing 4 * DATA_LENGTH
+updates on an data array which should allocate up to half of the available
+global memory of the benchmarked device.
+The updates are done unaligned and randomly directly on the global memory.
+The resulting metric is giga updates per second.
