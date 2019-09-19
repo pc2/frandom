@@ -84,6 +84,8 @@ Constants used to verify benchmark results
 #define POLY 7
 #define PERIOD 1317624576693539401L
 
+#define ENTRY_SPACE 13
+
 struct ProgramSettings {
     uint numRepetitions;
     uint numReplications;
@@ -150,9 +152,10 @@ parseProgramParameters(int argc, char * argv[]) {
 }
 
 void printResults(std::shared_ptr<ExecutionResults> results, size_t dataSize) {
-    std::cout << std::setw(11) << "type" << std::setw(11) << "best"
-              << std::setw(11) << "mean" << std::setw(11) << "GUOPS"
-              << std::setw(11) << "error" << std::endl;
+    std::cout << std::setw(ENTRY_SPACE) << "type" << std::setw(ENTRY_SPACE)
+              << "best" << std::setw(ENTRY_SPACE) << "mean"
+              << std::setw(ENTRY_SPACE) << "GUOPS"
+              << std::setw(ENTRY_SPACE) << "error" << std::endl;
 
     // Calculate performance for kernel execution plus data transfer
     double tmean = 0;
@@ -166,9 +169,10 @@ void printResults(std::shared_ptr<ExecutionResults> results, size_t dataSize) {
     }
     tmean = tmean / results->times.size();
 
-    std::cout << std::setw(11) << "calc" << std::setw(11) << tmin
-              << std::setw(11) << tmean << std::setw(11) << gups / tmin
-              << std::setw(11) << (100.0 * results->errorRate)
+    std::cout << std::setw(ENTRY_SPACE) << "calc" << std::setw(ENTRY_SPACE)
+              << tmin << std::setw(ENTRY_SPACE) << tmean
+              << std::setw(ENTRY_SPACE) << gups / tmin
+              << std::setw(ENTRY_SPACE) << (100.0 * results->errorRate)
               << std::endl;
 }
 
@@ -301,6 +305,7 @@ calculate(cl::Context context, cl::Device device, cl::Program program,
 
 
 int main(int argc, char * argv[]) {
+    // Setup benchmark
     std::shared_ptr<ProgramSettings> programSettings =
                                             parseProgramParameters(argc, argv);
     bm_helper::setupEnvironmentAndClocks();
@@ -309,6 +314,26 @@ int main(int argc, char * argv[]) {
     const char* usedKernel = programSettings->kernelFileName.c_str();
     cl::Program program = bm_helper::fpgaSetup(context, usedDevice, usedKernel);
 
+    // Give setup summary
+    std::cout << "Summary:" << std::endl
+              << "Kernel Replications: " << programSettings->numReplications
+              << std::endl
+              << "Repetitions:         " << programSettings->numRepetitions
+              << std::endl
+              << "Total data size:     " << (programSettings->dataSize
+                                            * sizeof(DATA_TYPE))
+                                         << " Byte" << std::endl
+              << "Memory Interleaving: " << programSettings->useMemInterleaving
+              << std::endl
+              << "Kernel file:         " << programSettings->kernelFileName
+              << std::endl
+              << "Device:              "
+              << usedDevice[0].getInfo<CL_DEVICE_NAME>() << std::endl
+              << HLINE
+              << "Start benchmark using the given configuration." << std::endl
+              << HLINE;
+
+    // Start actual benchmark
     auto results = calculate(context, usedDevice[0], program,
               programSettings->numRepetitions,
               programSettings->numReplications, programSettings->dataSize,

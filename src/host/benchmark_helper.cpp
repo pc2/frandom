@@ -106,16 +106,17 @@ namespace bm_helper {
         // Choose the target platform
         int chosenPlatformId = 0;
         if (platformList.size() > 1) {
-            std::cout << platformList.size() <<
-                " platforms have been found. Select the platform by typing a"\
-                " number:" << std::endl;
+            std::cout <<
+                "Multiple platforms have been found. Select the platform by"\
+                " typing a number:" << std::endl;
             for (int platformId = 0;
                     platformId < platformList.size(); platformId++) {
                 std::cout << platformId << ") " <<
                     platformList[platformId].getInfo<CL_PLATFORM_NAME>() <<
                     std::endl;
             }
-            std::cout << "Enter platform id [0-" << platformList.size() << "]:";
+            std::cout << "Enter platform id [0-" << platformList.size() - 1
+                      << "]:";
             std::cin >> chosenPlatformId;
         }
         cl::Platform platform = platformList[chosenPlatformId];
@@ -129,16 +130,16 @@ namespace bm_helper {
         // Choose taget device
         int chosenDeviceId = 0;
         if (deviceList.size() > 1) {
-            std::cout << deviceList.size() <<
-                " devices have been found. Select the platform by typing a"\
-                " number:" << std::endl;
+            std::cout <<
+                "Multiple devices have been found. Select the platform by"\
+                " typing a number:" << std::endl;
             for (int deviceId = 0;
                     deviceId < deviceList.size(); deviceId++) {
                 std::cout << deviceId << ") " <<
                     deviceList[deviceId].getInfo<CL_DEVICE_NAME>() <<
                     std::endl;
             }
-            std::cout << "Enter device id [0-" << deviceList.size() << "]:";
+            std::cout << "Enter device id [0-" << deviceList.size() - 1 << "]:";
             std::cin >> chosenDeviceId;
         }
         std::vector<cl::Device> chosenDeviceList;

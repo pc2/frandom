@@ -10,7 +10,7 @@
 #  instructions how to compile and execute the benchmark.
 
 # Used compilers for C code and OpenCL kernels
-CXX := g++ --std=c++11
+CXX := g++
 AOC := aoc
 AOCL := aocl
 MKDIR_P := mkdir -p
@@ -76,6 +76,8 @@ ifdef DEBUG
 CXX_FLAGS += -g
 endif
 
+CXX_FLAGS += -I. --std=c++11
+
 ifdef EMBARRASSINGLY_PARALLEL
 COMMON_FLAGS += -DEMBARRASSINGLY_PARALLEL
 endif
@@ -129,7 +131,7 @@ kernel_emulate: $(GEN_SRC_DIR)$(KERNEL_SRCS)
 	$(AOC) -march=emulator $(AOC_PARAMS) $(COMMON_FLAGS) -o $(BIN_DIR)$(KERNEL_TARGET)_emulate $(GEN_SRC_DIR)$(KERNEL_SRCS)
 
 run_emu: cleangen host kernel_emulate
-	CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA=1 gdb --args $(BIN_DIR)$(TARGET) $(BIN_DIR)$(KERNEL_TARGET)_emulate.aocx
+	CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA=1 gdb --args $(BIN_DIR)$(TARGET) -f $(BIN_DIR)$(KERNEL_TARGET)_emulate.aocx
 
 kernel_profile: $(GEN_SRC_DIR)$(KERNEL_SRCS)
 	$(MKDIR_P) $(BIN_DIR)
