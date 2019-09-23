@@ -43,9 +43,9 @@ Unrolling factor for the read and write pipelines of each kernel.
 
 #define POLY 7
 
-#pragma PY_CODE_GEN block_start
+// PY_CODE_GEN block_start
 #define SINGLE_KERNEL
-#pragma PY_CODE_GEN block_end if_cond(replications == 1, CODE, None)
+// PY_CODE_GEN block_end if_cond(replications == 1, CODE, None)
 
 /*
 The size of the local memory buffer.
@@ -64,9 +64,9 @@ to the kernel.
 @param m The size of the data array
 @param data_chunk The chunk index that has to be updated by the kernel
 */
-#pragma PY_CODE_GEN block_start
+// PY_CODE_GEN block_start
 __kernel
-void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
+void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
 						DATA_TYPE_UNSIGNED m,
 						DATA_TYPE_UNSIGNED data_chunk) {
 	// Initiate the pseudo random number
@@ -106,6 +106,7 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 
 		// load the data of the calculated addresses from global memory
 		#pragma unroll GLOBAL_MEM_UNROLL
+		#pragma ivdep
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			loaded_data[ld] = data[local_address[ld]];
@@ -118,6 +119,7 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 
 		// store back the calculated addresses from global memory
 		#pragma unroll GLOBAL_MEM_UNROLL
+		#pragma ivdep
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
@@ -129,4 +131,4 @@ void accessMemory$repl$(__global DATA_TYPE_UNSIGNED* restrict volatile data,
 		}
 	}
 }
-#pragma PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]
+// PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]

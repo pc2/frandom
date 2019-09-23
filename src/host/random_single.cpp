@@ -30,7 +30,9 @@ SOFTWARE.
 
 /* External library headers */
 #include "CL/cl.hpp"
+#if QUARTUS_MAJOR_VERSION > 18
 #include "CL/cl_ext_intelfpga.h"
+#endif
 
 /* Project's headers */
 #include "src/host/benchmark_helper.h"
