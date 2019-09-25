@@ -76,6 +76,8 @@ Constants used to verify benchmark results
 #define POLY 7
 #define PERIOD 1317624576693539401L
 
+#define BIT_SIZE (sizeof(DATA_TYPE) * 8)
+
 #define ENTRY_SPACE 13
 
 struct ProgramSettings {
@@ -102,9 +104,31 @@ Supports the following parameters:
 std::shared_ptr<ProgramSettings>
 parseProgramParameters(int argc, char * argv[]);
 
+
+/**
+ Generates the value of the random number after a desired number of updates
+
+ @param n number of random number updates
+
+ @return The random number after n number of updates
+ */
+DATA_TYPE_UNSIGNED
+starts(DATA_TYPE n);
+
+/**
+Prints the execution results to stdout
+
+@param results The execution results
+@param dataSize Size of the used data array. Needed to calculate GUOP/s from
+                timings
+*/
 void printResults(std::shared_ptr<bm_execution::ExecutionResults> results,
                   size_t dataSize);
 
+
+/**
+The program entry point
+*/
 int main(int argc, char * argv[]);
 
 #endif // SRC_HOST_COMMON_FUNCTIONALITY_H_

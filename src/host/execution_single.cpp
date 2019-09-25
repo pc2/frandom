@@ -81,10 +81,12 @@ namespace bm_execution {
                 }
             }
 
-            Buffer_data.push_back(cl::Buffer(context, channel | CL_MEM_READ_WRITE,
+            Buffer_data.push_back(cl::Buffer(context, channel |
+                        CL_MEM_READ_WRITE,
                         sizeof(DATA_TYPE_UNSIGNED)*(dataSize / replications)));
             accesskernel.push_back(cl::Kernel(program,
-                        (RANDOM_ACCESS_KERNEL + std::to_string(r)).c_str() , &err));
+                        (RANDOM_ACCESS_KERNEL + std::to_string(r)).c_str() ,
+                        &err));
             ASSERT_CL(err);
 
             // prepare kernels
@@ -124,7 +126,8 @@ namespace bm_execution {
             }
             auto t2 = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> timespan =
-                std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+                std::chrono::duration_cast<std::chrono::duration<double>>
+                                                                    (t2 - t1);
             executionTimes.push_back(timespan.count());
         }
 
@@ -137,10 +140,11 @@ namespace bm_execution {
         DATA_TYPE_UNSIGNED* data;
         posix_memalign(reinterpret_cast<void **>(&data), 64,
                                         (sizeof(DATA_TYPE)*dataSize));
-        for (size_t j=0; j < (dataSize / replications); j++) {
-            for (size_t r =0; r < replications; r++) {
+        for (size_t r =0; r < replications; r++) {
+            for (size_t j=0; j < (dataSize / replications); j++) {
                 data[r*(dataSize / replications) + j] = data_sets[r][j];
             }
+            free(reinterpret_cast<void *>(data_sets[r]));
         }
 
         /* --- Check Results --- */
@@ -164,7 +168,8 @@ namespace bm_execution {
         free(reinterpret_cast<void *>(data));
 
         std::shared_ptr<ExecutionResults> results(
-                        new ExecutionResults{executionTimes, errors / dataSize});
+                        new ExecutionResults{executionTimes,
+                                             errors / dataSize});
         return results;
     }
 

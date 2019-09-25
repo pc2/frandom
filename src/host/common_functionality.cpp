@@ -102,7 +102,8 @@ Print the benchmark Results
 @param dataSize The size of the used data array
 
 */
-void printResults(std::shared_ptr<bm_execution::ExecutionResults> results,
+void
+printResults(std::shared_ptr<bm_execution::ExecutionResults> results,
                   size_t dataSize) {
     std::cout << std::setw(ENTRY_SPACE)
               << "best" << std::setw(ENTRY_SPACE) << "mean"
@@ -129,10 +130,77 @@ void printResults(std::shared_ptr<bm_execution::ExecutionResults> results,
 }
 
 /**
+ Generates the value of the random number after a desired number of updates
+
+ @param n number of random number updates
+
+ @return The random number after n number of updates
+ */
+DATA_TYPE_UNSIGNED
+starts(DATA_TYPE n) {
+    DATA_TYPE_UNSIGNED m2[BIT_SIZE];
+
+    while (n < 0) {
+        n += PERIOD;
+    }
+    while (n > 0) {
+        n -= PERIOD;
+    }
+
+    if (n == 0) {
+        return 1;
+    }
+
+    DATA_TYPE_UNSIGNED temp = 1;
+    for (int i=0; i < BIT_SIZE; i++) {
+        m2[i] = temp;
+        for (int j=0; j < 2; j++) {
+            DATA_TYPE v = 0;
+            if (((DATA_TYPE) temp) < 0) {
+                v = POLY;
+            }
+            temp = (temp << 1) ^ v;
+        }
+    }
+    // DATA_TYPE i = BIT_SIZE - 2;
+    // while (i >= 0 && !((n >> i) & 1)) {
+    //     i--;
+    // }
+    int i = 0;
+    for (i=BIT_SIZE - 2; i >= 0; i--) {
+        if ((n >> i) & 1) {
+            break;
+        }
+    }
+
+    DATA_TYPE_UNSIGNED ran = 2;
+    while (i > 0) {
+        temp = 0;
+        for (int j=0; j < BIT_SIZE; j++) {
+            if ((ran >> j) & 1) {
+                temp ^= m2[j];
+            }
+        }
+        ran = temp;
+        i--;
+        if ((n >> i) & 1) {
+            DATA_TYPE v = 0;
+            if (((DATA_TYPE) ran) < 0) {
+                v = POLY;
+            }
+            ran = (ran << 1) ^v;
+        }
+    }
+    return ran;
+}
+
+
+/**
 The program entry point.
 Prepares the FPGA and executes the kernels on the device.
 */
-int main(int argc, char * argv[]) {
+int
+main(int argc, char * argv[]) {
     // Setup benchmark
     std::shared_ptr<ProgramSettings> programSettings =
                                             parseProgramParameters(argc, argv);
