@@ -65,6 +65,7 @@ to the kernel.
 @param data_chunk The chunk index that has to be updated by the kernel
 */
 // PY_CODE_GEN block_start
+__attribute__((max_global_work_dim(0)))
 __kernel
 void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
 						DATA_TYPE_UNSIGNED m,
