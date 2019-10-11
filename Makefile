@@ -52,6 +52,7 @@ endif
 TYPE := single
 REPLICATIONS := 4
 GLOBAL_MEM_UNROLL := 8
+UPDATE_SPLIT := 8
 BOARD := p520_max_sg280l
 GLOBAL_MEM_SIZE := 1073741824L
 AOC_FLAGS :=-no-interleaving=default
@@ -66,7 +67,8 @@ KERNEL_SRCS := random_access_kernels_$(TYPE)_$(REPLICATIONS)_$(GLOBAL_MEM_UNROLL
 KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)
 
 COMMON_FLAGS := -DREPLICATIONS=$(REPLICATIONS)\
- 				-DQUARTUS_MAJOR_VERSION=$(QUARTUS_MAJOR_VERSION)
+ 				-DQUARTUS_MAJOR_VERSION=$(QUARTUS_MAJOR_VERSION)\
+				-DUPDATE_SPLIT=$(UPDATE_SPLIT)
 AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) -DGLOBAL_MEM_UNROLL=$(GLOBAL_MEM_UNROLL)
 
 ifdef DATA_TYPE
@@ -79,13 +81,14 @@ ifdef DEBUG
 CXX_FLAGS += -g
 endif
 
-CXX_FLAGS += -I. --std=c++11
+CXX_FLAGS += -I. --std=c++11 -I./cxxopts/include
 
 $(info BOARD                   = $(BOARD))
 $(info BUILD_SUFFIX            = $(BUILD_SUFFIX))
 $(info AOC_FLAGS               = $(AOC_FLAGS))
 $(info REPLICATIONS            = $(REPLICATIONS))
 $(info GLOBAL_MEM_SIZE         = $(GLOBAL_MEM_SIZE))
+$(info UPDATE_SPLIT            = $(UPDATE_SPLIT))
 $(info GLOBAL_MEM_UNROLL       = $(GLOBAL_MEM_UNROLL))
 $(info TYPE                    = $(TYPE))
 $(info ***************************)
