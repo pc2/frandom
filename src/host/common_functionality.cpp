@@ -36,10 +36,10 @@ SOFTWARE.
 #if QUARTUS_MAJOR_VERSION > 18
 #include "CL/cl_ext_intelfpga.h"
 #endif
+#include "cxxopts.hpp"
 
 /* Project's headers */
 #include "src/host/benchmark_helper.h"
-#include "src/host/cxxopts.hpp"
 #include "src/host/execution.h"
 
 
@@ -217,7 +217,7 @@ main(int argc, char * argv[]) {
               << "Repetitions:         " << programSettings->numRepetitions
               << std::endl
               << "Total data size:     " << (programSettings->dataSize
-                                            * sizeof(DATA_TYPE))
+                                            * sizeof(DATA_TYPE)) * 1.0
                                          << " Byte" << std::endl
               << "Memory Interleaving: " << programSettings->useMemInterleaving
               << std::endl
