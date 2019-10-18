@@ -95,7 +95,7 @@ namespace bm_helper {
 
 
     std::vector<cl::Device>
-    selectFPGADevice() {
+    selectFPGADevice(int defaultPlatform, int defaultDevice) {
         // Integer used to store return codes of OpenCL library calls
         int err;
 
@@ -105,7 +105,15 @@ namespace bm_helper {
 
         // Choose the target platform
         int chosenPlatformId = 0;
-        if (platformList.size() > 1) {
+        if (defaultPlatform >= 0) {
+            if (defaultPlatform < platformList.size()) {
+                chosenPlatformId = defaultPlatform;
+            } else {
+                std::cerr << "Default platform " << defaultPlatform
+                << " can not be used. Available platforms: "
+                << platformList.size();
+            }
+        } else if (platformList.size() > 1) {
             std::cout <<
                 "Multiple platforms have been found. Select the platform by"\
                 " typing a number:" << std::endl;
@@ -129,7 +137,15 @@ namespace bm_helper {
 
         // Choose taget device
         int chosenDeviceId = 0;
-        if (deviceList.size() > 1) {
+        if (defaultDevice >= 0) {
+            if (defaultDevice < deviceList.size()) {
+                chosenDeviceId = defaultDevice;
+            } else {
+                std::cerr << "Default platform " << defaultDevice
+                << " can not be used. Available platforms: "
+                << deviceList.size();
+            }
+        } else if (deviceList.size() > 1) {
             std::cout <<
                 "Multiple devices have been found. Select the platform by"\
                 " typing a number:" << std::endl;

@@ -70,6 +70,13 @@ parseProgramParameters(int argc, char * argv[]) {
                 cxxopts::value<size_t>()
                                 ->default_value(std::to_string(DATA_LENGTH)))
         ("i,nointerleaving", "Disable memory interleaving")
+        ("device", "Index of the device that has to be used. If not given you "\
+        "will be asked which device to use if there are multiple devices "\
+        "available.", cxxopts::value<int>()->default_value(std::to_string(-1)))
+        ("platform", "Index of the platform that has to be used. If not given "\
+        "you will be asked which platform to use if there are multiple "\
+        "platforms available.",
+            cxxopts::value<int>()->default_value(std::to_string(-1)))
         ("h,help", "Print this help");
     cxxopts::ParseResult result = options.parse(argc, argv);
 
@@ -205,10 +212,19 @@ main(int argc, char * argv[]) {
     std::shared_ptr<ProgramSettings> programSettings =
                                             parseProgramParameters(argc, argv);
     bm_helper::setupEnvironmentAndClocks();
-    std::vector<cl::Device> usedDevice = bm_helper::selectFPGADevice();
-    cl::Context context = cl::Context(usedDevice);
-    const char* usedKernel = programSettings->kernelFileName.c_str();
-    cl::Program program = bm_helper::fpgaSetup(context, usedDevice, usedKernel);
+
+    std::vector<cl::Device> usedDevice;
+    cl::Context context;
+    cl::Program program;
+    cl::Device device;
+
+    if (programSettings->kernelFileName != "CPU") {
+        usedDevice = bm_helper::selectFPGADevice();
+        context = cl::Context(usedDevice);
+        const char* usedKernel = programSettings->kernelFileName.c_str();
+        program = bm_helper::fpgaSetup(context, usedDevice, usedKernel);
+    }
+
 
     // Give setup summary
     std::cout << "Summary:" << std::endl
@@ -222,15 +238,18 @@ main(int argc, char * argv[]) {
               << "Memory Interleaving: " << programSettings->useMemInterleaving
               << std::endl
               << "Kernel file:         " << programSettings->kernelFileName
-              << std::endl
-              << "Device:              "
-              << usedDevice[0].getInfo<CL_DEVICE_NAME>() << std::endl
-              << HLINE
+              << std::endl;
+    if (usedDevice.size() > 0) {
+    std::cout << "Device:              "
+              << usedDevice[0].getInfo<CL_DEVICE_NAME>() << std::endl;
+              device = usedDevice[0];
+    }
+    std::cout << HLINE
               << "Start benchmark using the given configuration." << std::endl
               << HLINE;
 
     // Start actual benchmark
-    auto results = bm_execution::calculate(context, usedDevice[0], program,
+    auto results = bm_execution::calculate(context,device, program,
               programSettings->numRepetitions,
               programSettings->numReplications, programSettings->dataSize,
               programSettings->useMemInterleaving);

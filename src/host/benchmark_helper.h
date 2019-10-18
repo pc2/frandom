@@ -47,10 +47,17 @@ namespace bm_helper {
     If multiple platforms or devices are given, the user will be prompted to
     choose a device.
 
+    @param defaultPlatform The index of the platform that has to be used. If a
+                            value < 0 is given, the platform can be chosen
+                            interactively
+    @param defaultDevice The index of the device that has to be used. If a
+                            value < 0 is given, the device can be chosen 
+                            interactively
+
     @return A list containing a single selected device
     */
     std::vector<cl::Device>
-    selectFPGADevice();
+    selectFPGADevice(int defaultPlatform, int defaultDevice);
 
 
     /**
