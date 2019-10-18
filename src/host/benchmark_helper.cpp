@@ -45,6 +45,8 @@ namespace bm_helper {
     cl::Program
     fpgaSetup(cl::Context context, std::vector<cl::Device> deviceList,
               std::string usedKernelFile) {
+        int err;
+
         std::cout << HLINE;
         std::cout << "FPGA Setup:" << usedKernelFile << std::endl;
 
@@ -67,8 +69,8 @@ namespace bm_helper {
         mybinaries.push_back({buf, file_size});
 
         // Create the Program from the AOCX file.
-        cl::Program program(context, deviceList, mybinaries);
-
+        cl::Program program(context, deviceList, mybinaries, NULL, &err);
+        ASSERT_CL(err);
         std::cout << "Prepared FPGA successfully for global Execution!" <<
                      std::endl;
         std::cout << HLINE;
@@ -111,7 +113,8 @@ namespace bm_helper {
             } else {
                 std::cerr << "Default platform " << defaultPlatform
                 << " can not be used. Available platforms: "
-                << platformList.size();
+                << platformList.size() << std::endl;
+                exit(1);
             }
         } else if (platformList.size() > 1) {
             std::cout <<
@@ -143,7 +146,8 @@ namespace bm_helper {
             } else {
                 std::cerr << "Default platform " << defaultDevice
                 << " can not be used. Available platforms: "
-                << deviceList.size();
+                << deviceList.size()  << std::endl;
+                exit(1);
             }
         } else if (deviceList.size() > 1) {
             std::cout <<

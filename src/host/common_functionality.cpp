@@ -96,6 +96,8 @@ parseProgramParameters(int argc, char * argv[]) {
     // Create program settings from program arguments
     std::shared_ptr<ProgramSettings> sharedSettings(
             new ProgramSettings {result["n"].as<uint>(), result["r"].as<uint>(),
+                                result["platform"].as<int>(),
+                                result["device"].as<int>(),
                                 result["d"].as<size_t>(),
                                 static_cast<bool>(result.count("i") <= 0),
                                 result["f"].as<std::string>()});
@@ -219,7 +221,9 @@ main(int argc, char * argv[]) {
     cl::Device device;
 
     if (programSettings->kernelFileName != "CPU") {
-        usedDevice = bm_helper::selectFPGADevice();
+        usedDevice = bm_helper::selectFPGADevice(
+                                        programSettings->defaultPlatform,
+                                        programSettings->defaultDevice);
         context = cl::Context(usedDevice);
         const char* usedKernel = programSettings->kernelFileName.c_str();
         program = bm_helper::fpgaSetup(context, usedDevice, usedKernel);
@@ -249,7 +253,7 @@ main(int argc, char * argv[]) {
               << HLINE;
 
     // Start actual benchmark
-    auto results = bm_execution::calculate(context,device, program,
+    auto results = bm_execution::calculate(context, device, program,
               programSettings->numRepetitions,
               programSettings->numReplications, programSettings->dataSize,
               programSettings->useMemInterleaving);

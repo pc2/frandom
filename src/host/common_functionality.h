@@ -83,6 +83,8 @@ Constants used to verify benchmark results
 struct ProgramSettings {
     uint numRepetitions;
     uint numReplications;
+    int defaultPlatform;
+    int defaultDevice;
     size_t dataSize;
     bool useMemInterleaving;
     std::string kernelFileName;
