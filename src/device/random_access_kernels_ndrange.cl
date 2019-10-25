@@ -10,7 +10,7 @@
 
 // SIMD not used, and instead CU replication since we have random accesses
 __attribute__((num_simd_work_items(1)))
-__attribute__((num_compute_units(REPLICATIONS)))
+__attribute__((num_compute_units(UPDATE_SPLIT)))
 __kernel
 void accessMemory(__global volatile DATA_TYPE_UNSIGNED* restrict data,
                   __global const DATA_TYPE_UNSIGNED* restrict ran_const,

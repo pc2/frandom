@@ -20,8 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#define UPDATE_SPLIT 1024
-
 /* Related header files */
 #include "src/host/execution.h"
 
