@@ -31,8 +31,14 @@ SOFTWARE.
 /*
 Short description of the program
 */
+
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+
 #define PROGRAM_DESCRIPTION "Implementation of the random access benchmark"\
-                            " proposed in the HPCC benchmark suite for FPGA"
+                            " proposed in the HPCC benchmark suite for FPGA.\n"\
+                            "Version: " STR(VERSION) "\nBuild date: "\
+                            STR(BUILD_DATE)
 
 /*
 Total length of the data array used for random accesses.

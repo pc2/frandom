@@ -9,6 +9,9 @@
 #  Please read the README contained in this folder for more information and
 #  instructions how to compile and execute the benchmark.
 
+VERSION := 1.0.0
+BUILD_DATE := $(shell date)
+
 # Used compilers for C code and OpenCL kernels
 CXX := g++
 AOC := aoc
@@ -55,7 +58,6 @@ GLOBAL_MEM_UNROLL := 8
 UPDATE_SPLIT := 8
 BOARD := p520_max_sg280l
 GLOBAL_MEM_SIZE := 1073741824L
-AOC_FLAGS :=-no-interleaving=default
 ## End build settings
 
 GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
@@ -68,20 +70,17 @@ KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)
 
 COMMON_FLAGS := -DREPLICATIONS=$(REPLICATIONS)\
  				-DQUARTUS_MAJOR_VERSION=$(QUARTUS_MAJOR_VERSION)\
-				-DUPDATE_SPLIT=$(UPDATE_SPLIT)
+				-DUPDATE_SPLIT=$(UPDATE_SPLIT)\
+				-DVERSION=$(VERSION)\
+				-DBUILD_DATE="$(BUILD_DATE)"
 AOC_PARAMS := $(AOC_FLAGS) -board=$(BOARD) -DGLOBAL_MEM_UNROLL=$(GLOBAL_MEM_UNROLL)
 
 ifdef DATA_TYPE
-CXX_FLAGS += -DDATA_TYPE=cl_$(DATA_TYPE) -DDATA_TYPE_UNSIGNED=cl_$(DATA_TYPE_UNSIGNED)
+CXX_PARAMS += -DDATA_TYPE=cl_$(DATA_TYPE) -DDATA_TYPE_UNSIGNED=cl_$(DATA_TYPE_UNSIGNED)
 AOC_PARAMS += -DDATA_TYPE=$(DATA_TYPE) -DDATA_TYPE_UNSIGNED=$(DATA_TYPE_UNSIGNED)
 endif
 
-
-ifdef DEBUG
-CXX_FLAGS += -g
-endif
-
-CXX_FLAGS += -I. --std=c++11 -I./cxxopts/include
+CXX_PARAMS += -I. --std=c++11 -I./cxxopts/include $(CXX_FLAGS)
 
 $(info BOARD                   = $(BOARD))
 $(info BUILD_SUFFIX            = $(BUILD_SUFFIX))
@@ -91,6 +90,7 @@ $(info GLOBAL_MEM_SIZE         = $(GLOBAL_MEM_SIZE))
 $(info UPDATE_SPLIT            = $(UPDATE_SPLIT))
 $(info GLOBAL_MEM_UNROLL       = $(GLOBAL_MEM_UNROLL))
 $(info TYPE                    = $(TYPE))
+$(info CXX_FLAGS               = $(CXX_FLAGS))
 $(info ***************************)
 
 default: info
@@ -120,7 +120,7 @@ $(GEN_SRC_DIR)$(KERNEL_SRCS): $(GEN_KERNEL_SRC)
 
 host: $(SRCS)
 	$(MKDIR_P) $(BIN_DIR)
-	$(CXX) $(CXX_FLAGS) $(AOCL_COMPILE_CONFIG) $(COMMON_FLAGS) -DDATA_LENGTH=$(GLOBAL_MEM_SIZE) \
+	$(CXX) $(CXX_PARAMS) $(AOCL_COMPILE_CONFIG) $(COMMON_FLAGS) -DDATA_LENGTH=$(GLOBAL_MEM_SIZE) \
 	$(SRCS) $(AOCL_LINK_CONFIG) -o $(BIN_DIR)$(TARGET)
 
 kernel: $(GEN_SRC_DIR)$(KERNEL_SRCS)
@@ -132,6 +132,7 @@ kernel_emulate: $(GEN_SRC_DIR)$(KERNEL_SRCS)
 	$(AOC) -march=emulator $(AOC_PARAMS) $(COMMON_FLAGS) -o $(BIN_DIR)$(KERNEL_TARGET)_emulate $(GEN_SRC_DIR)$(KERNEL_SRCS)
 
 run_emu: cleangen host kernel_emulate
+	chmod +x $(BIN_DIR)$(TARGET)
 	CL_CONTEXT_EMULATOR_DEVICE_INTELFPGA=1 gdb --args $(BIN_DIR)$(TARGET) -f $(BIN_DIR)$(KERNEL_TARGET)_emulate.aocx
 
 kernel_profile: $(GEN_SRC_DIR)$(KERNEL_SRCS)
