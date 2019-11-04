@@ -17,7 +17,7 @@ So to make use of the code generation make sure to check out the repository recu
 
 The code has the following dependencies:
 
-- C++ compiler
+- C++ compiler (GCC >= 4.9 with libc++)
 - Intel® FPGA SDK for OpenCL™
 - Python 3 (only for code generation)
 
