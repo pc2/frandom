@@ -81,7 +81,6 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
 	DATA_TYPE_UNSIGNED const mupdate = 4 * m;
 
 	// do random accesses
-	#pragma ivdep
 	for (DATA_TYPE_UNSIGNED i=0; i< mupdate / LOOP_DELAY; i++) {
 
 		DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
@@ -107,7 +106,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
 
 		// load the data of the calculated addresses from global memory
 		#pragma unroll GLOBAL_MEM_UNROLL
-		#pragma ivdep
+		#pragma ivdep array(data)
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			loaded_data[ld] = data[local_address[ld]];
@@ -120,7 +119,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
 
 		// store back the calculated addresses from global memory
 		#pragma unroll GLOBAL_MEM_UNROLL
-		#pragma ivdep
+		#pragma ivdep array(data)
 		for (int ld=0; ld< LOOP_DELAY; ld++) {
 			#ifdef SINGLE_KERNEL
 			data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
