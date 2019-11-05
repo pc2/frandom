@@ -1,5 +1,30 @@
-#ifndef BENCHMARK_HELPER_H
-#define BENCHMARK_HELPER_H
+/*
+Copyright (c) 2019 Marius Meyer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+#ifndef SRC_HOST_BENCHMARK_HELPER_H_
+#define SRC_HOST_BENCHMARK_HELPER_H_
+
+#include <string>
+#include <vector>
+
 
 /* External libraries */
 #include "CL/cl.hpp"
@@ -51,7 +76,7 @@ namespace bm_helper {
                             value < 0 is given, the platform can be chosen
                             interactively
     @param defaultDevice The index of the device that has to be used. If a
-                            value < 0 is given, the device can be chosen 
+                            value < 0 is given, the device can be chosen
                             interactively
 
     @return A list containing a single selected device
@@ -82,4 +107,4 @@ namespace bm_helper {
                        int const  line);
 
 }  // namespace bm_helper
-#endif // BENCHMARK_HELPER_H_INCLUDED
+#endif  // SRC_HOST_BENCHMARK_HELPER_H_
