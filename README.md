@@ -38,6 +38,7 @@ For more detailed information about the available build targets call:
 
 without specifying a target.
 This will print a list of the targets together with a short description.
+Moreover a list of all parameters is given at the bottom of this file.
 
 To compile all necessary bitstreams and executables for the benchmark run:
 
@@ -114,7 +115,7 @@ See the example below the table.
 Example for synthesizing a kernel to create a profiling report:
 
 ```bash
-make kernel_profile BOARD=p520_hpc_sg280l CXX_FLAGS=-03 \
+make kernel_profile BOARD=p520_hpc_sg280l CXX_FLAGS=-O3 \
 AOC_FLAGS="-no-interleave=default" REPLICATIONS=4 TYPE=single
 ```
 
@@ -136,3 +137,6 @@ The result  summary looks similar to this:
     after the updates where made. The maximal allowed error rate of the
     random access benchmark is 1% according to the rules given in the HPCChallenge
     specification.
+
+Benchmark results can be found in the `results` folder in this
+repository.
