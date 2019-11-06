@@ -20,7 +20,7 @@ Details of the synthesized kernels:
 | `BOARD`           | p520_hpc_sg280l      |
 | `AOC_FLAGS`       | `-fpc -fp-relaxed -no-interleaving=default -seed=2809` |
 | `REPLICATIONS`    | 4                    |
-| `UPDATE_SPLIT`    | - |
+| `UPDATE_SPLIT`    | 1024 |
 | `GLOBAL_MEM_UNROLL`| 8  |
 
 For the BittWare 520N board the kernels where synthesized and executed
@@ -37,7 +37,7 @@ All results are summarized in the given
 [CSV](./frandom_single_results.csv) file together with the fMax of the
 synthesized kernel.
 
-The benchmark results are also plotted in the figure below. 
+The benchmark results are also plotted in the figure below.
 Note that the SDK version 17.1.2 is not directly comparable with the other
 results since another FPGA and board was used.
 One difference is the number of memory banks on the board.
