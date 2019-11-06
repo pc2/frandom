@@ -19,8 +19,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#ifndef SRC_HOST_BENCHMARK_HELPER_H_
-#define SRC_HOST_BENCHMARK_HELPER_H_
+#ifndef SRC_HOST_FPGA_SETUP_H_
+#define SRC_HOST_FPGA_SETUP_H_
 
 #include <string>
 #include <vector>
@@ -44,9 +44,9 @@ Output separator
 Makro that enables checks for OpenCL errors with handling of the file and
 line number.
 */
-#define ASSERT_CL(err) bm_helper::handleClReturnCode(err, __FILE__, __LINE__)
+#define ASSERT_CL(err) fpga_setup::handleClReturnCode(err, __FILE__, __LINE__)
 
-namespace bm_helper {
+namespace fpga_setup {
 
     /**
     Sets up the given FPGA with the kernel in the provided file.
@@ -106,5 +106,5 @@ namespace bm_helper {
     handleClReturnCode(cl_int const err, std::string const file,
                        int const  line);
 
-}  // namespace bm_helper
-#endif  // SRC_HOST_BENCHMARK_HELPER_H_
+}  // namespace fpga_setup
+#endif  // SRC_HOST_FPGA_SETUP_H_

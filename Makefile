@@ -63,7 +63,7 @@ GLOBAL_MEM_SIZE := 1073741824L
 GEN_KERNEL_SRC := $(SRC_DIR)device/random_access_kernels_$(TYPE).cl
 
 MAIN_SRC := execution_$(TYPE).cpp
-SRCS := $(patsubst %, $(SRC_DIR)host/%, $(MAIN_SRC) benchmark_helper.cpp common_functionality.cpp)
+SRCS := $(patsubst %, $(SRC_DIR)host/%, $(MAIN_SRC) fpga_setup.cpp random_access_functionality.cpp)
 TARGET := $(MAIN_SRC:.cpp=)$(EXT_BUILD_SUFFIX)
 KERNEL_SRCS := random_access_kernels_$(TYPE)_$(REPLICATIONS)_$(GLOBAL_MEM_UNROLL).cl
 KERNEL_TARGET := $(KERNEL_SRCS:.cl=)$(EXT_BUILD_SUFFIX)

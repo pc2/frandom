@@ -36,8 +36,8 @@ SOFTWARE.
 #endif
 
 /* Project's headers */
-#include "src/host/benchmark_helper.h"
-#include "src/host/common_functionality.h"
+#include "src/host/fpga_setup.h"
+#include "src/host/random_access_functionality.h"
 
 namespace bm_execution {
 

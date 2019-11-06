@@ -21,7 +21,7 @@ SOFTWARE.
 */
 
 /* Related header files */
-#include "src/host/benchmark_helper.h"
+#include "src/host/fpga_setup.h"
 
 /* C++ standard library */
 #include <algorithm>
@@ -40,7 +40,7 @@ SOFTWARE.
 Includes several helper functions to develop and execute benchmarks on Intel
 FPGAs.
 */
-namespace bm_helper {
+namespace fpga_setup {
 
     cl::Program
     fpgaSetup(cl::Context context, std::vector<cl::Device> deviceList,
@@ -263,4 +263,4 @@ namespace bm_helper {
           return "UNKNOWN ERROR CODE";
         }
     }
-}  // namespace bm_helper
+}  // namespace fpga_setup

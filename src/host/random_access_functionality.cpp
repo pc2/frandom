@@ -21,7 +21,7 @@ SOFTWARE.
 */
 
 /* Related header files */
-#include "src/host/common_functionality.h"
+#include "src/host/random_access_functionality.h"
 
 /* C++ standard library headers */
 #include <iostream>
@@ -39,7 +39,7 @@ SOFTWARE.
 #include "cxxopts.hpp"
 
 /* Project's headers */
-#include "src/host/benchmark_helper.h"
+#include "src/host/fpga_setup.h"
 #include "src/host/execution.h"
 
 
@@ -213,7 +213,7 @@ main(int argc, char * argv[]) {
     // Setup benchmark
     std::shared_ptr<ProgramSettings> programSettings =
                                             parseProgramParameters(argc, argv);
-    bm_helper::setupEnvironmentAndClocks();
+    fpga_setup::setupEnvironmentAndClocks();
 
     std::vector<cl::Device> usedDevice;
     cl::Context context;
@@ -221,12 +221,12 @@ main(int argc, char * argv[]) {
     cl::Device device;
 
     if (programSettings->kernelFileName != "CPU") {
-        usedDevice = bm_helper::selectFPGADevice(
+        usedDevice = fpga_setup::selectFPGADevice(
                                         programSettings->defaultPlatform,
                                         programSettings->defaultDevice);
         context = cl::Context(usedDevice);
         const char* usedKernel = programSettings->kernelFileName.c_str();
-        program = bm_helper::fpgaSetup(context, usedDevice, usedKernel);
+        program = fpga_setup::fpgaSetup(context, usedDevice, usedKernel);
     }
 
 
