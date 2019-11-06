@@ -108,7 +108,7 @@ See the example below the table.
 | `AOC_FLAGS`       |:white_check_mark:/:white_check_mark:/:white_check_mark:/:x:               | Additional compile flags for `aoc`       |
 | `REPLICATIONS`    |:white_check_mark:/:white_check_mark:/:x:/:white_check_mark:| Number of kernels that are created       |
 | `GLOBAL_MEM_SIZE` |:x:/:x:/:x:/:white_check_mark:                              | Number of data items in the data array   |
-| `UPDATE_SPLIT`    |:white_check_mark:/:white_check_mark:/:white_check_mark:/(:white_check_mark:)             | Number of pre-calculated random numbers and sizes of local memory buffers  |
+| `UPDATE_SPLIT`    |:white_check_mark:/:white_check_mark:/:white_check_mark:/(:white_check_mark:)             | Number of pre-calculated random numbers and sizes of local memory buffers. `UPDATE_SPLIT` > 1 will lead to errors in `single` and `single_rnd` but also increase the performance |
 | `GLOBAL_MEM_UNROLL`|:white_check_mark:/:white_check_mark:/:x:/:x:              | Unrolling of loops that access the global memory |
 | `CXX_FLAGS`       |:x:/:x:/:x:/:white_check_mark:                              | Additional C++ compiler flags            |
 
