@@ -63,80 +63,82 @@ multiple kernels. In that case, the index of the current split can be given
 to the kernel.
 
 @param data The data array that will be updated
+@param random precalculated random numbers that are used to simultaneously update
+    multiple addresses
 @param m The size of the data array
 @param data_chunk The chunk index that has to be updated by the kernel
 */
 // PY_CODE_GEN block_start
 __kernel
 void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
-						__global DATA_TYPE_UNSIGNED* restrict random,
-						DATA_TYPE_UNSIGNED m,
-						DATA_TYPE_UNSIGNED data_chunk) {
+                        __global DATA_TYPE_UNSIGNED* restrict random,
+                        DATA_TYPE_UNSIGNED m,
+                        DATA_TYPE_UNSIGNED data_chunk) {
 
-	DATA_TYPE_UNSIGNED local_random[UPDATE_SPLIT];
-	#pragma unroll GLOBAL_MEM_UNROLL
-	for (int i=0; i< UPDATE_SPLIT; i++) {
-		local_random[i] = random[i];
-	}
+    DATA_TYPE_UNSIGNED local_random[UPDATE_SPLIT];
+    #pragma unroll GLOBAL_MEM_UNROLL
+    for (int i=0; i< UPDATE_SPLIT; i++) {
+        local_random[i] = random[i];
+    }
 
-	// calculate the start of the address range this kernel is responsible for
-	#ifndef SINGLE_KERNEL
-	DATA_TYPE_UNSIGNED const address_start = $repl$ * data_chunk;
-	#endif
+    // calculate the start of the address range this kernel is responsible for
+    #ifndef SINGLE_KERNEL
+    DATA_TYPE_UNSIGNED const address_start = $repl$ * data_chunk;
+    #endif
 
-	DATA_TYPE_UNSIGNED const mupdate = 4 * m;
+    DATA_TYPE_UNSIGNED const mupdate = 4 * m;
 
-	// do random accesses
-	#pragma ivdep
-	for (DATA_TYPE_UNSIGNED i=0; i< mupdate / UPDATE_SPLIT; i++) {
+    // do random accesses
+    #pragma ivdep
+    for (DATA_TYPE_UNSIGNED i=0; i< mupdate / UPDATE_SPLIT; i++) {
 
-		DATA_TYPE_UNSIGNED local_address[UPDATE_SPLIT];
-		DATA_TYPE_UNSIGNED loaded_data[UPDATE_SPLIT];
-		DATA_TYPE_UNSIGNED writeback_data[UPDATE_SPLIT];
-		DATA_TYPE_UNSIGNED update_val[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED local_address[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED loaded_data[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED writeback_data[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED update_val[UPDATE_SPLIT];
 
-		// calculate next addresses
-		#pragma unroll
-		for (int ld=0; ld< UPDATE_SPLIT; ld++) {
-			DATA_TYPE v = 0;
-			if (((DATA_TYPE) local_random[ld]) < 0) {
-				v = POLY;
-			}
-			local_random[ld] = (local_random[ld] << 1) ^ v;
-			update_val[ld] = local_random[ld];
-			DATA_TYPE_UNSIGNED address = local_random[ld] & (m - 1);
-			#ifndef SINGLE_KERNEL
-			local_address[ld] = address - address_start;
-			#else
-			local_address[ld] = address;
-			#endif
-		}
+        // calculate next addresses
+        #pragma unroll
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
+            DATA_TYPE v = 0;
+            if (((DATA_TYPE) local_random[ld]) < 0) {
+                v = POLY;
+            }
+            local_random[ld] = (local_random[ld] << 1) ^ v;
+            update_val[ld] = local_random[ld];
+            DATA_TYPE_UNSIGNED address = local_random[ld] & (m - 1);
+            #ifndef SINGLE_KERNEL
+            local_address[ld] = address - address_start;
+            #else
+            local_address[ld] = address;
+            #endif
+        }
 
-		// load the data of the calculated addresses from global memory
-		#pragma unroll
-		#pragma ivdep
-		for (int ld=0; ld< UPDATE_SPLIT; ld++) {
-			#ifdef SINGLE_KERNEL
-			loaded_data[ld] = data[local_address[ld]];
-			#else
-			if (local_address[ld] < data_chunk) {
-				loaded_data[ld] = data[local_address[ld]];
-			}
-			#endif
-		}
+        // load the data of the calculated addresses from global memory
+        #pragma unroll
+        #pragma ivdep
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
+            #ifdef SINGLE_KERNEL
+            loaded_data[ld] = data[local_address[ld]];
+            #else
+            if (local_address[ld] < data_chunk) {
+                loaded_data[ld] = data[local_address[ld]];
+            }
+            #endif
+        }
 
-		// store back the calculated addresses from global memory
-		#pragma unroll
-		#pragma ivdep
-		for (int ld=0; ld< UPDATE_SPLIT; ld++) {
-			#ifdef SINGLE_KERNEL
-			data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
-			#else
-			if (local_address[ld] < data_chunk) {
-				data[local_address[ld]] = loaded_data[ld] ^ update_val[ld];
-			}
-			#endif
-		}
-	}
+        // store back the calculated addresses from global memory
+        #pragma unroll
+        #pragma ivdep
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
+            #ifdef SINGLE_KERNEL
+            data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
+            #else
+            if (local_address[ld] < data_chunk) {
+                data[local_address[ld]] = loaded_data[ld] ^ update_val[ld];
+            }
+            #endif
+        }
+    }
 }
 // PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]

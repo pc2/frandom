@@ -68,67 +68,67 @@ to the kernel.
 __attribute__((max_global_work_dim(0)))
 __kernel
 void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
-						DATA_TYPE_UNSIGNED m,
-						DATA_TYPE_UNSIGNED data_chunk) {
-	// Initiate the pseudo random number
-	DATA_TYPE_UNSIGNED ran = 1;
+                        DATA_TYPE_UNSIGNED m,
+                        DATA_TYPE_UNSIGNED data_chunk) {
+    // Initiate the pseudo random number
+    DATA_TYPE_UNSIGNED ran = 1;
 
-	// calculate the start of the address range this kernel is responsible for
-	#ifndef SINGLE_KERNEL
-	DATA_TYPE_UNSIGNED const address_start = $repl$ * data_chunk;
-	#endif
+    // calculate the start of the address range this kernel is responsible for
+    #ifndef SINGLE_KERNEL
+    DATA_TYPE_UNSIGNED const address_start = $repl$ * data_chunk;
+    #endif
 
-	DATA_TYPE_UNSIGNED const mupdate = 4 * m;
+    DATA_TYPE_UNSIGNED const mupdate = 4 * m;
 
-	// do random accesses
-	for (DATA_TYPE_UNSIGNED i=0; i< mupdate / LOOP_DELAY; i++) {
+    // do random accesses
+    for (DATA_TYPE_UNSIGNED i=0; i< mupdate / LOOP_DELAY; i++) {
 
-		DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
-		DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
-		DATA_TYPE_UNSIGNED writeback_data[LOOP_DELAY];
-		DATA_TYPE_UNSIGNED update_val[LOOP_DELAY];
+        DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
+        DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
+        DATA_TYPE_UNSIGNED writeback_data[LOOP_DELAY];
+        DATA_TYPE_UNSIGNED update_val[LOOP_DELAY];
 
-		// calculate next addresses
-		for (int ld=0; ld< LOOP_DELAY; ld++) {
-			DATA_TYPE v = 0;
-			if (((DATA_TYPE) ran) < 0) {
-				v = POLY;
-			}
-			ran = (ran << 1) ^ v;
-			update_val[ld] = ran;
-			DATA_TYPE_UNSIGNED address = ran & (m - 1);
-			#ifndef SINGLE_KERNEL
-			local_address[ld] = address - address_start;
-			#else
-			local_address[ld] = address;
-			#endif
-		}
+        // calculate next addresses
+        for (int ld=0; ld< LOOP_DELAY; ld++) {
+            DATA_TYPE v = 0;
+            if (((DATA_TYPE) ran) < 0) {
+                v = POLY;
+            }
+            ran = (ran << 1) ^ v;
+            update_val[ld] = ran;
+            DATA_TYPE_UNSIGNED address = ran & (m - 1);
+            #ifndef SINGLE_KERNEL
+            local_address[ld] = address - address_start;
+            #else
+            local_address[ld] = address;
+            #endif
+        }
 
-		// load the data of the calculated addresses from global memory
-		#pragma unroll GLOBAL_MEM_UNROLL
-		#pragma ivdep array(data)
-		for (int ld=0; ld< LOOP_DELAY; ld++) {
-			#ifdef SINGLE_KERNEL
-			loaded_data[ld] = data[local_address[ld]];
-			#else
-			if (local_address[ld] < data_chunk) {
-				loaded_data[ld] = data[local_address[ld]];
-			}
-			#endif
-		}
+        // load the data of the calculated addresses from global memory
+        #pragma unroll GLOBAL_MEM_UNROLL
+        #pragma ivdep array(data)
+        for (int ld=0; ld< LOOP_DELAY; ld++) {
+            #ifdef SINGLE_KERNEL
+            loaded_data[ld] = data[local_address[ld]];
+            #else
+            if (local_address[ld] < data_chunk) {
+                loaded_data[ld] = data[local_address[ld]];
+            }
+            #endif
+        }
 
-		// store back the calculated addresses from global memory
-		#pragma unroll GLOBAL_MEM_UNROLL
-		#pragma ivdep array(data)
-		for (int ld=0; ld< LOOP_DELAY; ld++) {
-			#ifdef SINGLE_KERNEL
-			data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
-			#else
-			if (local_address[ld] < data_chunk) {
-				data[local_address[ld]] = loaded_data[ld] ^ update_val[ld];
-			}
-			#endif
-		}
-	}
+        // store back the calculated addresses from global memory
+        #pragma unroll GLOBAL_MEM_UNROLL
+        #pragma ivdep array(data)
+        for (int ld=0; ld< LOOP_DELAY; ld++) {
+            #ifdef SINGLE_KERNEL
+            data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
+            #else
+            if (local_address[ld] < data_chunk) {
+                data[local_address[ld]] = loaded_data[ld] ^ update_val[ld];
+            }
+            #endif
+        }
+    }
 }
 // PY_CODE_GEN block_end [replace(replace_dict=locals()) for repl in range(replications)]
