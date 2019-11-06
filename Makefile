@@ -107,7 +107,6 @@ info:
 	$(info kernel                       = Compile global memory kernel)
 	$(info kernel_emulate               = Compile  global memory kernel for emulation)
 	$(info kernel_profile               = Compile  global memory kernel with profiling information enabled)
-	$(info kernel_profile               = Compile  global memory kernel with profiling information enabled)
 	$(info ************************************************)
 	$(info info                         = Print this list of available targets)
 	$(info ************************************************)
