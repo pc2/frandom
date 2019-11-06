@@ -41,6 +41,9 @@ Unrolling factor for the read and write pipelines of each kernel.
 #define GLOBAL_MEM_UNROLL 4
 #endif
 
+/*
+Constant used to update the pseudo random number
+*/
 #define POLY 7
 
 // PY_CODE_GEN block_start
@@ -52,7 +55,9 @@ The size of the local memory buffer.
 If it is chosen too big, the experienced error might increase because Multiple
 updates to the same memory address within this range will be overridden.
 */
-#define LOOP_DELAY 1024
+#ifndef UPDATE_SPLIT
+#define UPDATE_SPLIT 1024
+#endif
 
 /*
 Kernel, that will update the given data array accoring to a predefined pseudo-
@@ -81,15 +86,15 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
     DATA_TYPE_UNSIGNED const mupdate = 4 * m;
 
     // do random accesses
-    for (DATA_TYPE_UNSIGNED i=0; i< mupdate / LOOP_DELAY; i++) {
+    for (DATA_TYPE_UNSIGNED i=0; i< mupdate / UPDATE_SPLIT; i++) {
 
-        DATA_TYPE_UNSIGNED local_address[LOOP_DELAY];
-        DATA_TYPE_UNSIGNED loaded_data[LOOP_DELAY];
-        DATA_TYPE_UNSIGNED writeback_data[LOOP_DELAY];
-        DATA_TYPE_UNSIGNED update_val[LOOP_DELAY];
+        DATA_TYPE_UNSIGNED local_address[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED loaded_data[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED writeback_data[UPDATE_SPLIT];
+        DATA_TYPE_UNSIGNED update_val[UPDATE_SPLIT];
 
         // calculate next addresses
-        for (int ld=0; ld< LOOP_DELAY; ld++) {
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             DATA_TYPE v = 0;
             if (((DATA_TYPE) ran) < 0) {
                 v = POLY;
@@ -107,7 +112,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
         // load the data of the calculated addresses from global memory
         #pragma unroll GLOBAL_MEM_UNROLL
         #pragma ivdep array(data)
-        for (int ld=0; ld< LOOP_DELAY; ld++) {
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             #ifdef SINGLE_KERNEL
             loaded_data[ld] = data[local_address[ld]];
             #else
@@ -120,7 +125,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
         // store back the calculated addresses from global memory
         #pragma unroll GLOBAL_MEM_UNROLL
         #pragma ivdep array(data)
-        for (int ld=0; ld< LOOP_DELAY; ld++) {
+        for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             #ifdef SINGLE_KERNEL
             data[local_address[ld]] = loaded_data[ld] ^update_val[ld];
             #else

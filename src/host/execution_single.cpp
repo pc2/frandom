@@ -42,7 +42,8 @@ SOFTWARE.
 namespace bm_execution {
 
     /*
-     Prepare kernels and execute benchmark
+    Implementation for the single kernel.
+     @copydoc bm_execution::calculate()
     */
     std::shared_ptr<ExecutionResults>
     calculate(cl::Context context, cl::Device device, cl::Program program,

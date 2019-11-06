@@ -32,6 +32,12 @@ SOFTWARE.
 
 namespace bm_execution {
 
+/**
+This struct is returned by the calculate call and contains the measured
+runtimes and the error rate in the data set after the updates.
+
+@see bm_execution::calculate()
+*/
 struct ExecutionResults {
     std::vector<double> times;
     double errorRate;

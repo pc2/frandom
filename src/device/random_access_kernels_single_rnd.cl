@@ -41,6 +41,9 @@ Unrolling factor for the read and write pipelines of each kernel.
 #define GLOBAL_MEM_UNROLL 4
 #endif
 
+/*
+Constant used to update the pseudo random number
+*/
 #define POLY 7
 
 // PY_CODE_GEN block_start
@@ -53,7 +56,7 @@ If it is chosen too big, the experienced error might increase because Multiple
 updates to the same memory address within this range will be overridden.
 */
 #ifndef UPDATE_SPLIT
-#define UPDATE_SPLIT 8
+#define UPDATE_SPLIT 1024
 #endif
 
 /*
@@ -98,7 +101,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
         DATA_TYPE_UNSIGNED update_val[UPDATE_SPLIT];
 
         // calculate next addresses
-        #pragma unroll
+        #pragma unroll GLOBAL_MEM_UNROLL
         for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             DATA_TYPE v = 0;
             if (((DATA_TYPE) local_random[ld]) < 0) {
@@ -115,7 +118,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
         }
 
         // load the data of the calculated addresses from global memory
-        #pragma unroll
+        #pragma unroll GLOBAL_MEM_UNROLL
         #pragma ivdep
         for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             #ifdef SINGLE_KERNEL
@@ -128,7 +131,7 @@ void accessMemory$repl$(__global volatile DATA_TYPE_UNSIGNED* restrict data,
         }
 
         // store back the calculated addresses from global memory
-        #pragma unroll
+        #pragma unroll GLOBAL_MEM_UNROLL
         #pragma ivdep
         for (int ld=0; ld< UPDATE_SPLIT; ld++) {
             #ifdef SINGLE_KERNEL

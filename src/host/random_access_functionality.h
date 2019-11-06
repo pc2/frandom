@@ -30,9 +30,9 @@ SOFTWARE.
 #include "src/host/execution.h"
 
 /*
-Short description of the program
+Short description of the program.
+Moreover the version and build time is also compiled into the description.
 */
-
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
 
@@ -41,7 +41,7 @@ Short description of the program
                             "Version: " STR(VERSION) "\nBuild date: "\
                             STR(BUILD_DATE)
 
-/*
+/**
 Total length of the data array used for random accesses.
 The array should allocate half of the available global memory space.
 Keep in mind that this also depends on DATA_TYPE.
@@ -50,14 +50,14 @@ Keep in mind that this also depends on DATA_TYPE.
 #define DATA_LENGTH 67108864
 #endif
 
-/*
+/**
 Number of times the execution of the benchmark will be repeated.
 */
 #ifndef NTIMES
 #define NTIMES 1
 #endif
 
-/*
+/**
 The data type used for the random accesses.
 Note that it should be big enough to address the whole data array. Moreover it
 has to be the same type as in the used kernels.
@@ -70,14 +70,14 @@ The signed and unsigned form of the data type have to be given separately.
 #define DATA_TYPE_UNSIGNED cl_ulong
 #endif
 
-/*
+/**
 Prefix of the function name of the used kernel.
 It will be used to construct the full function name for the case of replications.
 The full name will be
 */
 #define RANDOM_ACCESS_KERNEL "accessMemory"
 
-/*
+/**
 Constants used to verify benchmark results
 */
 #define POLY 7
