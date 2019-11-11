@@ -1,7 +1,7 @@
 # Random Access Benchmark for FPGA
 
 This repository contains the Random Access Benchmark for FPGA and its OpenCL kernels.
-Currently only the  Intel® FPGA SDK for OpenCL™ utility is supported.
+Currently only the  Intel FPGA SDK for OpenCL utility is supported.
 
 It is a modified implementation of the
 [Random Access Benchmark](https://icl.utk.edu/projectsfiles/hpcc/RandomAccess/)
@@ -18,7 +18,7 @@ So to make use of the code generation make sure to check out the repository recu
 The code has the following dependencies:
 
 - C++ compiler (GCC >= 4.9 with libc++)
-- Intel® FPGA SDK for OpenCL™
+- Intel FPGA SDK for OpenCL
 - Python 3 (only for code generation)
 
 Depending on the use case you may want to change certain lines in the
