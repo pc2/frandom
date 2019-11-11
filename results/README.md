@@ -24,7 +24,7 @@ Details of the synthesized kernels:
 | `GLOBAL_MEM_UNROLL`| 8  |
 
 For the BittWare 520N board the kernels where synthesized and executed
-with the Intel(R) FPGA SDK for OpenCL(TM), 64-Bit Offline Compiler
+with the Intel FPGA SDK for OpenCL, 64-Bit Offline Compiler
 version 18.0.1, 18.1.1, 19.1.0 and 19.2.0.
 The Bittware 385A board is synthesized with version 17.1.
 C++ compiler:
@@ -42,6 +42,6 @@ Note that the SDK version 17.1.2 is not directly comparable with the other
 results since another FPGA and board was used.
 One difference is the number of memory banks on the board.
 For a better comparison of the results the metric _GOP/s per memory bank_ is
-used in the plot instead that was calculated as follows: $\frac{GOP/s}{\#memory\_banks}$
+used in the plot instead that was calculated as follows: $`\frac{GOP/s}{\#memory\_banks}`$
 
 ![Graph of the collected results](frandom_single_results.jpg)
