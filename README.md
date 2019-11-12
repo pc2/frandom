@@ -132,7 +132,7 @@ The result  summary looks similar to this:
     back and forth to the host.
 - `GUPS` contains the calculated metric _Giga Updates per Second_. It takes the
     fastest kernel execution time. The formula is
-    $`GUPS = \frac{4 * GLOBAL\_MEM\_SIZE}{ best\_time * 10^9}`$.
+    ![GOPs = 4 * GLOBAL_MEM_SIZE / (best_time * 10^9)](https://latex.codecogs.com/gif.latex?\inline&space;GUPS&space;=&space;&bsol;frac{4&space;*&space;GLOBAL\\_MEM\\_SIZE}{&space;best\\_time&space;*&space;10^9}).
 - `error` contains the percentage of memory positions with wrong values
     after the updates where made. The maximal allowed error rate of the
     random access benchmark is 1% according to the rules given in the HPCChallenge
