@@ -9,7 +9,7 @@
 #  Please read the README contained in this folder for more information and
 #  instructions how to compile and execute the benchmark.
 
-VERSION := 1.0.0
+VERSION := 1.0.1-SVM
 BUILD_DATE := $(shell date)
 
 # Used compilers for C code and OpenCL kernels
