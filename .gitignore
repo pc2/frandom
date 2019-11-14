@@ -4,3 +4,4 @@ bin/*
 generated/*
 *.genlog
 .vscode
+*.rbf
