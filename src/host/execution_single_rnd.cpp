@@ -69,7 +69,7 @@ namespace bm_execution {
 
             DATA_TYPE_UNSIGNED* random = reinterpret_cast<DATA_TYPE_UNSIGNED*>(
                                     clSVMAlloc(context(), 0 ,
-                                    sizeof(DATA_TYPE_UNSIGNED)*UPDATE_SPLIT, 1024));
+                                sizeof(DATA_TYPE_UNSIGNED)*UPDATE_SPLIT, 1024));
 
             for (DATA_TYPE i=0; i < UPDATE_SPLIT; i++) {
                 random[i] = starts((4 * DATA_LENGTH) / UPDATE_SPLIT * i);
@@ -114,8 +114,17 @@ namespace bm_execution {
                      j < (dataSize / replications); j++) {
                     data_sets[r][j] = r*(dataSize / replications) + j;
                 }
+                err = clEnqueueSVMMap(compute_queue[r](), CL_TRUE,
+                    CL_MAP_READ | CL_MAP_WRITE,
+                    reinterpret_cast<void *>(data_sets[r]),
+                    sizeof(DATA_TYPE)*(dataSize / replications), 0, NULL, NULL);
+                ASSERT_CL(err);
+                err = clEnqueueSVMMap(compute_queue[r](), CL_TRUE,
+                    CL_MAP_READ,
+                    reinterpret_cast<void *>(random_sets[r]),
+                    sizeof(DATA_TYPE_UNSIGNED)*UPDATE_SPLIT, 0, NULL, NULL);
+                ASSERT_CL(err);
             }
-
             // Execute benchmark kernels
             auto t1 = std::chrono::high_resolution_clock::now();
             for (int r=0; r < replications; r++) {
@@ -123,6 +132,14 @@ namespace bm_execution {
             }
             for (int r=0; r < replications; r++) {
                 compute_queue[r].finish();
+                err = clEnqueueSVMUnmap(compute_queue[r](),
+                    reinterpret_cast<void *>(random_sets[r]),
+                    0, NULL, NULL);
+                ASSERT_CL(err);
+                err = clEnqueueSVMUnmap(compute_queue[r](),
+                    reinterpret_cast<void *>(data_sets[r]),
+                    0, NULL, NULL);
+                ASSERT_CL(err);
             }
             auto t2 = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> timespan =

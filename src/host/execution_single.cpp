@@ -26,6 +26,7 @@ SOFTWARE.
 /* C++ standard library headers */
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -61,9 +62,9 @@ namespace bm_execution {
         /* --- Prepare kernels --- */
 
         for (int r=0; r < replications; r++) {
-            DATA_TYPE_UNSIGNED* data;
-            posix_memalign(reinterpret_cast<void **>(&data), 64,
-                           sizeof(DATA_TYPE)*(dataSize / replications));
+            DATA_TYPE_UNSIGNED* data = reinterpret_cast<DATA_TYPE_UNSIGNED*>(
+                            clSVMAlloc(context(), 0 ,
+                            sizeof(DATA_TYPE)*(dataSize / replications), 1024));
             data_sets.push_back(data);
 
             compute_queue.push_back(cl::CommandQueue(context, device));
@@ -71,27 +72,18 @@ namespace bm_execution {
             // Select memory bank to place data replication
             int channel = 0;
             if (!useMemInterleaving) {
-                switch ((r % replications) + 1) {
-                    case 1: channel = CL_CHANNEL_1_INTELFPGA; break;
-                    case 2: channel = CL_CHANNEL_2_INTELFPGA; break;
-                    case 3: channel = CL_CHANNEL_3_INTELFPGA; break;
-                    case 4: channel = CL_CHANNEL_4_INTELFPGA; break;
-                    case 5: channel = CL_CHANNEL_5_INTELFPGA; break;
-                    case 6: channel = CL_CHANNEL_6_INTELFPGA; break;
-                    case 7: channel = CL_CHANNEL_7_INTELFPGA; break;
-                }
+                // Memory interleaving not used in shared memory system
+                std::cerr << "Memory interleaving not supported!";
+                exit(1);
             }
-
-            Buffer_data.push_back(cl::Buffer(context, channel |
-                        CL_MEM_READ_WRITE,
-                        sizeof(DATA_TYPE_UNSIGNED)*(dataSize / replications)));
             accesskernel.push_back(cl::Kernel(program,
                         (RANDOM_ACCESS_KERNEL + std::to_string(r)).c_str() ,
                         &err));
             ASSERT_CL(err);
 
             // prepare kernels
-            err = accesskernel[r].setArg(0, Buffer_data[r]);
+            err = clSetKernelArgSVMPointerAltera(accesskernel[r](), 0,
+                                        reinterpret_cast<void*>(data_sets[r]));
             ASSERT_CL(err);
             err = accesskernel[r].setArg(1, DATA_TYPE_UNSIGNED(dataSize));
             ASSERT_CL(err);
@@ -112,10 +104,6 @@ namespace bm_execution {
                     data_sets[r][j] = r*(dataSize / replications) + j;
                 }
             }
-            for (int r=0; r < replications; r++) {
-                compute_queue[r].enqueueWriteBuffer(Buffer_data[r], CL_TRUE, 0,
-                     sizeof(DATA_TYPE)*(dataSize / replications), data_sets[r]);
-            }
 
             // Execute benchmark kernels
             auto t1 = std::chrono::high_resolution_clock::now();
@@ -134,18 +122,13 @@ namespace bm_execution {
 
         /* --- Read back results from Device --- */
 
-        for (int r=0; r < replications; r++) {
-            compute_queue[r].enqueueReadBuffer(Buffer_data[r], CL_TRUE, 0,
-                     sizeof(DATA_TYPE)*(dataSize / replications), data_sets[r]);
-        }
-        DATA_TYPE_UNSIGNED* data;
-        posix_memalign(reinterpret_cast<void **>(&data), 64,
-                                        (sizeof(DATA_TYPE)*dataSize));
+        DATA_TYPE_UNSIGNED* data =
+                            new DATA_TYPE_UNSIGNED[sizeof(DATA_TYPE)*dataSize];
         for (size_t r =0; r < replications; r++) {
             for (size_t j=0; j < (dataSize / replications); j++) {
                 data[r*(dataSize / replications) + j] = data_sets[r][j];
             }
-            free(reinterpret_cast<void *>(data_sets[r]));
+            clSVMFreeAltera(context(), reinterpret_cast<void *>(data_sets[r]));
         }
 
         /* --- Check Results --- */
@@ -166,7 +149,7 @@ namespace bm_execution {
                 errors++;
             }
         }
-        free(reinterpret_cast<void *>(data));
+        delete data;
 
         std::shared_ptr<ExecutionResults> results(
                         new ExecutionResults{executionTimes,
