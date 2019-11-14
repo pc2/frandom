@@ -1,5 +1,11 @@
 # Random Access Benchmark for FPGA
 
+##### Differences to Version 1.0.0
+
+- Use SVM instead of buffers on host side
+- Add `NO_CXXOPTS` flag to disable use of cxxopts and make code compatible with GCC version < 4.9
+- Adapt Makefile to old syntax of the aoc compiler
+
 This repository contains the Random Access Benchmark for FPGA and its OpenCL kernels.
 Currently only the  Intel FPGA SDK for OpenCL utility is supported.
 
@@ -17,7 +23,7 @@ So to make use of the code generation make sure to check out the repository recu
 
 The code has the following dependencies:
 
-- C++ compiler (GCC >= 4.9 with libc++)
+- C++ compiler
 - Intel FPGA SDK for OpenCL
 - Python 3 (only for code generation)
 
