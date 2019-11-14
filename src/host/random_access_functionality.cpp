@@ -110,7 +110,7 @@ parseProgramParameters(int argc, char * argv[]) {
                                 -1,
                                 -1,
                                 DATA_LENGTH,
-                                false,
+                                true,
                                 argv[1]});
 #endif
     return sharedSettings;
