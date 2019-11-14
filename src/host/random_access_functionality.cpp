@@ -36,8 +36,9 @@ SOFTWARE.
 #if QUARTUS_MAJOR_VERSION > 18
 #include "CL/cl_ext_intelfpga.h"
 #endif
+#ifndef NO_CXXOPTS
 #include "cxxopts.hpp"
-
+#endif
 /* Project's headers */
 #include "src/host/fpga_setup.h"
 #include "src/host/execution.h"
@@ -57,6 +58,7 @@ Supports the following parameters:
 */
 std::shared_ptr<ProgramSettings>
 parseProgramParameters(int argc, char * argv[]) {
+#ifndef NO_CXXOPTS
     // Defining and parsing program options
     cxxopts::Options options(argv[0], PROGRAM_DESCRIPTION);
     options.add_options()
@@ -101,6 +103,16 @@ parseProgramParameters(int argc, char * argv[]) {
                                 result["d"].as<size_t>(),
                                 static_cast<bool>(result.count("i") <= 0),
                                 result["f"].as<std::string>()});
+#else
+    // Create program settings from program arguments
+    std::shared_ptr<ProgramSettings> sharedSettings(
+            new ProgramSettings {NTIMES, REPLICATIONS,
+                                -1,
+                                -1,
+                                DATA_LENGTH,
+                                false,
+                                argv[1]});
+#endif
     return sharedSettings;
 }
 
