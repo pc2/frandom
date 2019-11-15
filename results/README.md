@@ -21,7 +21,7 @@ The default `AOC_FLAGS` where: `-fpc -fp-relaxed -no-interleaving=default -seed=
 
 | Parameter         | Noctua                           | CC              | HARP2                            |
 |------------------ | -------------------------------- | --------------- | -------------------------------- |
-| `BOARD`           | p520_hpc_sg280l/ p520_hpc_sg280l | p385a_sch_ax115 | bdw_fpga_v1.0                    |
+| `BOARD`           | p520_hpc_sg280l/ p520_max_sg280l | p385a_sch_ax115 | bdw_fpga_v1.0                    |
 | `AOC_FLAGS`       | default                          | default         | `--fpc --fp-relaxed --seed 2809` |
 | `REPLICATIONS`    | 4                                | 2               | 4                                |
 | `UPDATE_SPLIT`    | 1024                             | 1024            | 1024                             |
