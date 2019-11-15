@@ -231,6 +231,7 @@ main(int argc, char * argv[]) {
 
 
     // Give setup summary
+    std::cout << PROGRAM_DESCRIPTION << std::endl << HLINE;
     std::cout << "Summary:" << std::endl
               << "Kernel Replications: " << programSettings->numReplications
               << std::endl
