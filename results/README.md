@@ -42,6 +42,6 @@ Note that the SDK version 17.1.2 is not directly comparable with the other
 results since another FPGA and board was used.
 One difference is the number of memory banks on the board.
 For a better comparison of the results the metric _GOP/s per memory bank_ is
-used in the plot instead that was calculated as follows: $`\frac{GOP/s}{\#memory\_banks}`$
+used in the plot instead that was calculated as follows: ![GOP/s / num_memory_banks](https://latex.codecogs.com/gif.latex?\inline&space;\frac{GOP/s}{num\\_memory\\_banks})
 
 ![Graph of the collected results](frandom_single_results.jpg)
