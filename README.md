@@ -1,3 +1,8 @@
+### This Repository is archived
+
+The code of the RandomAccess Benchmark for FPGA was integrated into the [HPCC FPGA Benchmark suite](https://github.com/pc2/HPCC_FPGA).
+As a consequence, this repository is no longer maintained and the development will continue in the new repository as part of HPCC FPGA.
+
 # Random Access Benchmark for FPGA
 
 This repository contains the Random Access Benchmark for FPGA and its OpenCL kernels.
